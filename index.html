@@ -49,10 +49,35 @@
         .pnl-table tr:hover { background-color: rgba(0,0,0,0.01); }
         .pnl-section-header { background-color: rgba(241, 245, 249, 0.8); }
         @keyframes zoom-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        @keyframes zoom-in-fast { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
         .animate-zoom-in { animation: zoom-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .animate-zoom-in-fast { animation: zoom-in-fast 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .animate-fade-in { animation: fade-in 0.2s ease-out forwards; }
         @keyframes slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-slide-up { animation: slide-up 0.2s ease-out forwards; }
         .text-gradient { background: linear-gradient(to right, #0f172a, #475569); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+        @keyframes color-sweep { 
+            0% { filter: hue-rotate(0deg) brightness(1.3) saturate(1.5); } 
+            100% { filter: hue-rotate(360deg) brightness(1.3) saturate(1.5); } 
+        }
+        @keyframes shimmer-fade { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+        .nc-logo-sweep { animation: color-sweep 2.5s linear infinite, shimmer-fade 2.5s ease-in-out infinite; }
+        .nc-loader-ring {
+            width: 110px; height: 110px; border-radius: 50%;
+            background: conic-gradient(#F89E22 0deg, #33B34A 90deg, #EC008C 180deg, #2D3092 270deg, #F89E22 360deg);
+            animation: spin-ring 1.5s linear infinite;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nc-loader-inner {
+            width: 90px; height: 90px; border-radius: 50%;
+            background: #020617;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nc-logo-animate { animation: logo-breathe 2s ease-in-out infinite; }
     </style>
 </head>
 <body class="text-foreground antialiased selection:bg-indigo-500/30">
@@ -73,7 +98,7 @@
                         <span class="text-4xl">⚠️</span>
                     </div>
                     <h2 class="text-3xl font-black mb-4 tracking-tighter text-white">System Breach</h2>
-                    <div class="bg-black/40 p-6 rounded-3xl font-mono text-xs mb-8 text-rose-400/80 border border-white/5 leading-relaxed">${msg}</div>
+                    <div class="bg-black/40 p-6 rounded-3xl font-mono text-xs mb-8 text-rose-400/80 border border-white/5 leading-relaxed text-left overflow-auto max-h-64">${msg}<br/><br/>${error ? error.stack : 'No stack trace'}</div>
                     <button onclick="location.reload()" class="px-10 py-4 bg-white text-black rounded-2xl text-sm font-black hover:bg-slate-100 transition-all shadow-glow">Reset Dashboard</button>
                 </div>
             `;
@@ -141,6 +166,7 @@
                     // Clean numeric strings like "408,168"
                     if (typeof val === 'string') val = val.replace(/^"|"$/g, '').replace(/,/g, '');
                     obj[header] = val;
+                    obj._rawValues = values; // Store raw values for index-based access
                     return obj;
                 }, {});
             });
@@ -148,6 +174,8 @@
 
         const compute = (i) => {
             const gmv = parseFloat(i.gmv) || 0;
+            const margin = parseFloat(i.margin) || 0;
+            const dncn = parseFloat(i.dncn) || 0;
             const grossTradeMargin = parseFloat(i.grossTradeMargin) || 0;
             const grossTradeMarginPct = gmv ? (grossTradeMargin / gmv) * 100 : 0;
             const storageLogistics = parseFloat(i.storageLogistics) || 0;
@@ -169,7 +197,7 @@
             const netCM3 = cm3 - badDebts + provReversal;
             const netCM3Pct = gmv ? (netCM3 / gmv) * 100 : 0;
             return {
-                gmv, grossTradeMargin, grossTradeMarginPct,
+                gmv, margin, dncn, grossTradeMargin, grossTradeMarginPct,
                 storageLogistics, workingCapital, capitalCredit, marginOtherBU,
                 netTradeMargin, netTradeMarginPct,
                 cm2Costs, cm2, cm3Costs, manpower, travel, other, cm3, cm3Pct,
@@ -240,58 +268,128 @@
             );
         };
 
-        const CustomSelect = ({ value, options, onChange, className = "", icon }) => {
+        const CustomSelect = ({ value, options, onChange, className = "", icon, data }) => {
             const [isOpen, setIsOpen] = useState(false);
-            const containerRef = ReactGlobal.useRef(null);
-            
-            useEffect(() => {
-                const handleClick = (e) => {
-                    if (containerRef.current && !containerRef.current.contains(e.target)) setIsOpen(false);
-                };
-                window.addEventListener('click', handleClick);
-                return () => window.removeEventListener('click', handleClick);
-            }, []);
+            const triggerRef = ReactGlobal.useRef(null);
+            const dropdownRef = ReactGlobal.useRef(null);
+            const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
 
             const selected = options.find(o => o.key === value || o === value);
             const selectedLabel = typeof selected === 'object' ? selected.name : (selected || value);
 
+            const getInsight = (key, buData) => {
+                if (!buData) return null;
+                if (buData.netCM3Pct > 5) return { label: "Top", color: "emerald" };
+                if (buData.netCM3Pct < 0) return { label: "Risk", color: "rose" };
+                if (buData.gmv > 100) return { label: "Scale", color: "indigo" };
+                return { label: "Stable", color: "slate" };
+            };
+
+            const toggle = () => {
+                if (!isOpen && triggerRef.current) {
+                    const rect = triggerRef.current.getBoundingClientRect();
+                    const spaceRight = window.innerWidth - rect.left;
+                    const modalWidth = 280; // Estimated max width
+                    
+                    let left = rect.left;
+                    if (spaceRight < modalWidth) {
+                        left = rect.right - modalWidth;
+                    }
+
+                    setCoords({ 
+                        top: rect.bottom + 8, 
+                        left: Math.max(16, left),
+                        width: Math.max(modalWidth, rect.width)
+                    });
+                }
+                setIsOpen(!isOpen);
+            };
+
+            useEffect(() => {
+                if (!isOpen) return;
+                const handleScroll = (e) => {
+                    if (dropdownRef.current && dropdownRef.current.contains(e.target)) return;
+                    setIsOpen(false);
+                };
+                window.addEventListener('scroll', handleScroll, { capture: true });
+                return () => window.removeEventListener('scroll', handleScroll, { capture: true });
+            }, [isOpen]);
+
             return (
-                <div className={`relative ${className}`} ref={containerRef}>
+                <div className={`${className}`} ref={triggerRef}>
                     <div 
-                        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
-                        className="flex items-center justify-between cursor-pointer group"
+                        onClick={toggle}
+                        className="flex items-center justify-between cursor-pointer group hover:bg-black/5 p-2 -m-2 rounded-xl transition-all"
                     >
                         <div className="flex items-center gap-2">
                             {icon && <Icon name={icon} size={14} className="text-slate-400" />}
                             <span className="font-black truncate">{selectedLabel}</span>
                         </div>
-                        <Icon name="chevron" size={12} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        <Icon name="chevron" size={12} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-all" />
                     </div>
                     
-                    {isOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-2 z-[9999] bg-white/90 backdrop-blur-2xl border border-black/5 rounded-3xl shadow-premium overflow-hidden animate-slide-up max-h-[300px] overflow-y-auto custom-scrollbar min-w-[200px]">
-                            {options.map((opt, i) => {
-                                const key = typeof opt === 'object' ? opt.key : opt;
-                                const label = typeof opt === 'object' ? opt.name : opt;
-                                const isActive = key === value;
-                                return (
-                                    <div 
-                                        key={i}
-                                        onClick={() => { onChange(key); setIsOpen(false); }}
-                                        className={`px-5 py-3 text-[11px] font-bold transition-colors cursor-pointer flex items-center justify-between ${isActive ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                                    >
-                                        {label}
-                                        {isActive && <Icon name="check" size={12} />}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                    {isOpen && window.ReactDOM.createPortal(
+                        <div className="fixed inset-0 z-[10000] animate-fade-in">
+                            <div className="absolute inset-0" onClick={() => setIsOpen(false)}></div>
+                            <div 
+                                ref={dropdownRef}
+                                style={{ 
+                                    position: 'fixed', 
+                                    top: coords.top, 
+                                    left: coords.left, 
+                                    width: coords.width,
+                                    maxWidth: '320px'
+                                }}
+                                className="bg-white border border-black/5 rounded-[24px] shadow-2xl overflow-hidden animate-zoom-in-fast flex flex-col origin-top-left"
+                            >
+                                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select {icon === 'filter' ? 'Region' : 'Option'}</h3>
+                                    <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                                        <Icon name="x" size={14} className="text-slate-400" />
+                                    </button>
+                                </div>
+                                <div className="p-1.5 space-y-0.5 overflow-y-auto custom-scrollbar max-h-[40vh]">
+                                    {options.map((opt, i) => {
+                                        const key = typeof opt === 'object' ? opt.key : opt;
+                                        const label = typeof opt === 'object' ? opt.name : opt;
+                                        const isActive = key === value;
+                                        const buStats = data ? data[key] : null;
+                                        const insight = getInsight(key, buStats);
+
+                                        return (
+                                            <div 
+                                                key={i}
+                                                onClick={() => { onChange(key); setIsOpen(false); }}
+                                                className={`px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}
+                                            >
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[11px] font-black">{label}</span>
+                                                        {insight && !isActive && (
+                                                            <span className={`text-[7px] font-black uppercase tracking-tighter px-1 py-0.5 rounded-md bg-${insight.color}-100 text-${insight.color}-600`}>
+                                                                {insight.label}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {buStats && (
+                                                        <span className={`text-[8px] font-bold mt-0.5 ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
+                                                            {fmtPct(buStats.netCM3Pct)} · {fmtL(buStats.gmv)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {isActive && <Icon name="check" size={12} />}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>,
+                        document.body
                     )}
                 </div>
             );
         };
-
-        const Drawer = ({ isOpen, onClose, inputs, activeData, activeBu, onBuChange, onUpdate }) => {
+        const Drawer = ({ isOpen, onClose, inputs, activeData, activeBu, onBuChange, onUpdate, computedData }) => {
             if (!isOpen) return null;
             const isAggregate = activeBu === 'dom_fruits';
             const buData = activeData[activeBu] || { 
@@ -300,22 +398,31 @@
                 travel: 0, other: 0, badDebts: 0, provReversal: 0 
             };
             
-            const InputField = ({ label, field, val }) => (
-                <div className={`flex flex-col gap-1 ${isAggregate ? 'opacity-50' : ''}`}>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</label>
-                    <div className={`flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 transition-all ${isAggregate ? 'cursor-not-allowed' : 'focus-within:border-slate-900 focus-within:bg-white'}`}>
-                        <span className="text-slate-400 text-xs mr-2 font-bold">₹</span>
-                        <input 
-                            type="number" 
-                            value={val || 0} 
-                            disabled={isAggregate}
-                            onChange={(e) => onUpdate(activeBu, field, e.target.value)} 
-                            className="bg-transparent text-sm font-bold text-slate-900 outline-none w-full disabled:cursor-not-allowed" 
-                        />
-                        <span className="text-slate-400 text-[10px] ml-2 font-bold uppercase">L</span>
+            const InputField = ({ label, field, val, readOnly }) => {
+                const isCm2Field = field === 'cm2Costs';
+                // CM2 is editable ONLY at aggregate level. Others are editable ONLY at sub-BU level.
+                const isDisabled = readOnly || (isCm2Field ? !isAggregate : isAggregate);
+                const displayVal = isCm2Field && !isAggregate ? (computedData[activeBu]?.cm2Costs || 0) : val;
+
+                return (
+                    <div className={`flex flex-col gap-1 ${isDisabled ? 'opacity-50' : ''}`}>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            {label} {isCm2Field && !isAggregate && <span className="text-[8px] text-indigo-500 font-black tracking-tighter">(DISTRIBUTED)</span>}
+                        </label>
+                        <div className={`flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 transition-all ${isDisabled ? 'cursor-not-allowed bg-slate-100/50' : 'focus-within:border-slate-900 focus-within:bg-white'}`}>
+                            <span className="text-slate-400 text-xs mr-2 font-bold">₹</span>
+                            <input 
+                                type="number" 
+                                value={Number(displayVal).toFixed(2)} 
+                                disabled={isDisabled}
+                                onChange={(e) => onUpdate(activeBu, field, e.target.value)} 
+                                className="bg-transparent text-sm font-bold text-slate-900 outline-none w-full disabled:cursor-not-allowed" 
+                            />
+                            <span className="text-slate-400 text-[10px] ml-2 font-bold uppercase">L</span>
+                        </div>
                     </div>
-                </div>
-            );
+                );
+            };
 
             return (
                 <div className="fixed inset-0 z-[2000] flex justify-start">
@@ -337,7 +444,7 @@
                                 </h3>
                                 {isAggregate && <p className="text-[10px] text-slate-400 font-medium">This vertical is the aggregate of all sub-BUs. Edit individual BUs to change these values.</p>}
                             </div>
-                            <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">Gross Margin</div><div className="grid grid-cols-2 gap-6"><InputField label="GMV" field="gmv" val={buData.gmv} /><InputField label="Gross Trade Margin" field="grossTradeMargin" val={buData.grossTradeMargin} /></div></div>
+                            <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">Gross Margin</div><div className="grid grid-cols-2 gap-6"><InputField label="GMV" field="gmv" val={buData.gmv} readOnly /><InputField label="Base Margin" field="margin" val={buData.margin} readOnly /><InputField label="DN & CN" field="dncn" val={buData.dncn} /><InputField label="Gross Trade Margin" field="grossTradeMargin" val={buData.grossTradeMargin} readOnly /></div></div>
                             <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">CM1 Adjustments</div><div className="grid grid-cols-2 gap-6"><InputField label="Storage / Logistics" field="storageLogistics" val={buData.storageLogistics} /><InputField label="Working Capital Cost" field="workingCapital" val={buData.workingCapital} /><InputField label="Capital Credit Cost (1%)" field="capitalCredit" val={buData.capitalCredit} /><InputField label="Margin from Other BUs (+)" field="marginOtherBU" val={buData.marginOtherBU} /></div></div>
                             <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">CM2</div><InputField label="CM2 Costs" field="cm2Costs" val={buData.cm2Costs} /></div>
                             <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">CM3</div><div className="grid grid-cols-2 gap-6"><InputField label="Manpower Cost" field="manpower" val={buData.manpower} /><InputField label="Travel Cost" field="travel" val={buData.travel} /><InputField label="Other Cost" field="other" val={buData.other} /></div></div>
@@ -487,7 +594,7 @@
                 <div onClick={onClick} className={`relative p-6 rounded-[40px] overflow-hidden cursor-pointer group transition-all duration-500 hover:scale-[1.02] hover:shadow-premium bg-gradient-to-br ${theme} shadow-lg border border-white/10`}>
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-1000"></div>
                     <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-20 transition-all duration-700">
-                        <Icon name="logo" size={100} className="text-white" />
+                        <img src="https://ninjacart.com/wp-content/uploads/2023/10/cropped-Group-207-1.png" alt="" className="w-24 h-auto object-contain brightness-0 invert" />
                     </div>
                     
                     <div className="flex justify-between items-start mb-6 relative z-10">
@@ -579,7 +686,7 @@
             const isPos = stats.netCM3Pct >= 0;
 
             return (
-                <div className="flex-1 glass p-6 rounded-[32px] border border-black/5 bg-white shadow-sm flex flex-col gap-4 group hover:shadow-md transition-all relative overflow-hidden">
+                <div className="flex-1 glass p-6 rounded-[32px] border border-black/5 bg-white shadow-sm flex flex-col gap-4 group hover:shadow-md transition-all relative">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 opacity-50"></div>
                     <div className="flex items-center justify-between relative z-10">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{side === 'left' ? 'Primary View' : 'Benchmark View'}</span>
@@ -593,6 +700,7 @@
                             value={selectedBu} 
                             options={options} 
                             onChange={onSelect} 
+                            data={data}
                             className="text-lg font-black text-slate-900" 
                         />
                     </div>
@@ -605,6 +713,144 @@
                         <div className="text-right">
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Revenue</p>
                             <p className="text-sm font-black text-slate-900">{fmtL(stats.gmv || 0)}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ComparisonSummaryModal = ({ isOpen, onClose, buLeftKey, buRightKey, data }) => {
+            if (!isOpen || !buLeftKey || !buRightKey) return null;
+            const buL = SUB_BUS.find(b => b.key === buLeftKey);
+            const buR = SUB_BUS.find(b => b.key === buRightKey);
+            const dL = data[buLeftKey];
+            const dR = data[buRightKey];
+
+            const revDelta = dL.gmv - dR.gmv;
+            const cm3Delta = dL.netCM3Pct - dR.netCM3Pct;
+            const winner = dL.netCM3Pct > dR.netCM3Pct ? buL : buR;
+
+            const CompBar = ({ label, valL, valR, fmt }) => {
+                const max = Math.max(Math.abs(valL), Math.abs(valR)) || 1;
+                const pL = (Math.abs(valL) / max) * 100;
+                const pR = (Math.abs(valR) / max) * 100;
+                return (
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-end">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+                            <div className="flex gap-4">
+                                <span className="text-xs font-black text-indigo-600">{fmt(valL)}</span>
+                                <span className="text-xs font-black text-slate-900">{fmt(valR)}</span>
+                            </div>
+                        </div>
+                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                            <div style={{ width: `${pL}%` }} className="h-full bg-indigo-600 rounded-r-full"></div>
+                            <div className="w-px h-full bg-white z-10"></div>
+                            <div style={{ width: `${pR}%` }} className="h-full bg-slate-300 rounded-l-full"></div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const CompRow = ({ label, field, isPct, isBold, isNegative }) => {
+                const valL = dL[field];
+                const valR = dR[field];
+                const delta = valL - valR;
+                const deltaPct = valR !== 0 ? (delta / Math.abs(valR)) * 100 : 0;
+                const isBetter = isNegative ? (valL < valR) : (valL > valR);
+                return (
+                    <div className={`grid grid-cols-4 gap-4 py-3 border-b border-slate-50 items-center ${isBold ? 'bg-indigo-50/30 -mx-6 px-6' : ''}`}>
+                        <div className={`text-[10px] ${isBold ? 'font-black text-slate-900' : 'font-medium text-slate-500'}`}>{label}</div>
+                        <div className={`text-xs font-black text-center ${isBetter && !isBold ? 'text-indigo-600' : 'text-slate-900'}`}>{isPct ? fmtPct(valL) : fmtL(valL)}</div>
+                        <div className={`text-xs font-black text-center ${!isBetter && !isBold ? 'text-indigo-600' : 'text-slate-900'}`}>{isPct ? fmtPct(valR) : fmtL(valR)}</div>
+                        <div className={`text-[9px] font-black text-right ${delta >= 0 ? (isNegative ? 'text-rose-600' : 'text-emerald-600') : (isNegative ? 'text-emerald-600' : 'text-rose-600')}`}>
+                            {delta >= 0 ? '+' : ''}{isPct ? delta.toFixed(1) + '%' : fmtL(delta)}
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl" onClick={onClose}></div>
+                    <div className="relative bg-white border border-black/5 w-full max-w-5xl rounded-[48px] shadow-premium overflow-hidden flex flex-col animate-zoom-in max-h-[95vh]">
+                        <div className="p-10 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <div className="flex items-center gap-6">
+                                <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center shadow-lg"><Icon name="target" size={32} className="text-white" /></div>
+                                <div>
+                                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-1 block">Benchmarking Intelligence</span>
+                                    <h2 className="text-3xl font-black text-slate-900 tracking-tighter">{buL.name} vs {buR.name}</h2>
+                                </div>
+                            </div>
+                            <button onClick={onClose} className="p-4 hover:bg-slate-100 rounded-2xl transition-colors"><Icon name="x" size={24} className="text-slate-400" /></button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                                <div className="space-y-8">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><Icon name="zap" size={16} /></div>
+                                        <h3 className="text-xl font-black text-slate-900 tracking-tight">Comparative Analysis</h3>
+                                    </div>
+                                    <p className="text-lg font-medium text-slate-600 leading-relaxed">
+                                        {buL.name} is currently tracking at <span className="text-slate-900 font-black">{fmtL(dL.gmv)}</span> revenue, which is <span className="text-indigo-600 font-black">{fmtL(Math.abs(revDelta))} {revDelta >= 0 ? 'higher' : 'lower'}</span> than {buR.name}.
+                                        In terms of profitability, {winner.name} is the clear leader with a <span className="text-emerald-600 font-black">{fmtPct(Math.max(dL.netCM3Pct, dR.netCM3Pct))}</span> Net CM3 margin.
+                                    </p>
+                                    <div className="space-y-6 bg-slate-50 p-8 rounded-[32px] border border-black/5">
+                                        <CompBar label="Revenue Flow" valL={dL.gmv} valR={dR.gmv} fmt={fmtL} />
+                                        <CompBar label="Net Margin %" valL={dL.netCM3Pct} valR={dR.netCM3Pct} fmt={fmtPct} />
+                                        <CompBar label="CM2 Performance" valL={dL.cm2} valR={dR.cm2} fmt={fmtL} />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="p-8 bg-indigo-600 rounded-[32px] shadow-lg text-white relative overflow-hidden">
+                                        <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12">
+                                            <img src="https://ninjacart.com/wp-content/uploads/2023/10/cropped-Group-207-1.png" alt="" className="w-32 h-auto object-contain brightness-0 invert" />
+                                        </div>
+                                        <p className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-2">Performance Leader</p>
+                                        <h4 className="text-3xl font-black tracking-tighter mb-4">{winner.name}</h4>
+                                        <p className="text-xs font-medium text-white/80 leading-relaxed">Demonstrates superior operational efficiency with a {fmtPct(Math.abs(cm3Delta))} margin delta over the benchmark.</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-6 bg-slate-50 border border-black/5 rounded-3xl">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Logistics Variance</p>
+                                            <p className="text-xl font-black text-rose-600">{fmtL(dL.storageLogistics - dR.storageLogistics)}</p>
+                                            <p className="text-[9px] font-bold text-slate-500 mt-2">Gap in supply chain cost</p>
+                                        </div>
+                                        <div className="p-6 bg-slate-50 border border-black/5 rounded-3xl">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Growth Index</p>
+                                            <p className="text-xl font-black text-indigo-600">+{((dL.gmv / dR.gmv - 1) * 100).toFixed(1)}%</p>
+                                            <p className="text-[9px] font-bold text-slate-500 mt-2">Relative scale vs benchmark</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="h-px bg-slate-100"></div>
+
+                            <div className="space-y-8">
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight text-center">Row-by-Row Benchmark Matrix</h3>
+                                <div className="bg-white border border-black/5 rounded-[32px] p-8 shadow-sm">
+                                    <div className="grid grid-cols-4 gap-4 mb-4 px-6">
+                                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">P&L Item</div>
+                                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">{buL.short}</div>
+                                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">{buR.short}</div>
+                                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Delta</div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <CompRow label="Sales (GMV)" field="gmv" isBold />
+                                        <CompRow label="Gross Trade Margin %" field="grossTradeMarginPct" isPct />
+                                        <CompRow label="Storage & Logistics" field="storageLogistics" isNegative />
+                                        <CompRow label="Net Trade Margin" field="netTradeMargin" isBold />
+                                        <CompRow label="CM2 Performance" field="cm2" isBold />
+                                        <CompRow label="Final Net CM3 %" field="netCM3Pct" isPct isBold />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-center">
+                            <button onClick={onClose} className="px-10 py-4 bg-slate-900 text-white rounded-[24px] text-xs font-black uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-premium">Return to Dashboard</button>
                         </div>
                     </div>
                 </div>
@@ -780,10 +1026,12 @@
             );
         };
 
+        // EditableRow was removed in favor of Drawer input
+
         const Dashboard = () => {
             const [view, setView] = useState("actual");
             const [month, setMonth] = useState("Apr");
-            const [year, setYear] = useState("'26");
+            const [year, setYear] = useState("2026");
             const [rawSheetData, setRawSheetData] = useState([]);
             const [loading, setLoading] = useState(true);
             const [showDrawer, setShowDrawer] = useState(false);
@@ -792,6 +1040,19 @@
             const [selectedMetric, setSelectedMetric] = useState(null);
             const [selectedBuDetail, setSelectedBuDetail] = useState(null);
             const [showSummary, setShowSummary] = useState(false);
+            const [chart1Metric, setChart1Metric] = useState("Gross Margin %");
+            const [chart2Metric, setChart2Metric] = useState("CM3");
+
+            const METRIC_CHART_MAP = {
+                "GMV": { key: "gmv", isPct: false, color: "#f97316", desc: "Total gross merchandise value (Lakhs)" },
+                "Gross Margin %": { key: "marginPct", isPct: true, color: "#4f46e5", desc: "Network blended profitability timeline" },
+                "Gross Margin": { key: "margin", isPct: false, color: "#6366f1", desc: "Total trade margin (Lakhs)" },
+                "CM1": { key: "cm1", isPct: false, color: "#0ea5e9", desc: "Post-logistics margin (Lakhs)" },
+                "CM2": { key: "cm2", isPct: false, color: "#3b82f6", desc: "Post operations margin (Lakhs)" },
+                "CM3": { key: "cm3", isPct: false, color: "#059669", desc: "Monthly contribution margin tier 3 (Lakhs)" },
+                "Net CM3": { key: "netCm3", isPct: false, color: "#e11d48", desc: "Final bottomline after provisions (Lakhs)" }
+            };
+            const [showComparisonSummary, setShowComparisonSummary] = useState(false);
             const [showAccounts, setShowAccounts] = useState(false);
             const [regionFilter, setRegionFilter] = useState('dom_fruits');
             const [compareLeft, setCompareLeft] = useState('pomo_ka');
@@ -817,6 +1078,16 @@
                 const mark = (row['Mark'] || "").toUpperCase();
                 const channel = (row['Channel'] || "").toLowerCase();
                 const market = (row['Source Market'] || "").toLowerCase();
+                
+                // Surgical Column F (Index 5) check for Mode
+                const rawMode = (row._rawValues && row._rawValues[5] ? String(row._rawValues[5]) : "").toUpperCase();
+                const isKnownParty = 
+                    rawMode.includes("KP") || 
+                    rawMode.includes("KNOWN PARTY") || 
+                    rawMode.includes("KNOWN PAIR") || 
+                    rawMode.includes("KNOWN PARE");
+
+                if (isKnownParty) return "others";
 
                 if (mark.includes("POMO")) {
                     if (channel === "ninjacart") {
@@ -831,14 +1102,14 @@
                 }
                 if (mark.includes("MANGO")) return "mango";
                 if (mark.includes("SHIMLA") || mark.includes("APPLE")) {
-                    return mark.includes("CA") ? "shimla_apple_ca" : "shimla_apple_fresh";
+                    return mark.includes("CA") ? "shimla_apple_fresh" : "shimla_apple_ca";
                 }
                 if (mark.includes("DOM") || mark.includes("FRUIT")) return "dom_fruits";
                 return "others";
             };
 
-            const liveAggregated = useMemo(() => {
-                const yearFull = "20" + year.replace("'", "");
+            const baseAggregated = useMemo(() => {
+                const yearFull = year;
                 const monthMap = { 
                     "Jan": "Jan", "Feb": "Feb", "Mar": "March", "Apr": "April", "May": "May", "Jun": "June",
                     "Jul": "July", "Aug": "August", "Sep": "September", "Oct": "October", "Nov": "November", "Dec": "December"
@@ -846,7 +1117,7 @@
                 const targetMonth = (monthMap[month] || month).toLowerCase();
 
                 const buckets = {};
-                SUB_BUS.forEach(b => buckets[b.key] = { gmv: 0, grossTradeMargin: 0, boxes: 0 });
+                SUB_BUS.forEach(b => buckets[b.key] = { gmv: 0, margin: 0, boxes: 0 });
 
                 rawSheetData.forEach(row => {
                     const rowYear = String(row['Year'] || "").trim();
@@ -856,60 +1127,101 @@
                         const key = mapRowToBU(row);
                         if (key && key !== "dom_fruits" && buckets[key]) {
                             buckets[key].gmv += parseFloat(row['Sales (GMV)']) || 0;
-                            buckets[key].grossTradeMargin += parseFloat(row['Margin']) || 0;
+                            buckets[key].margin += parseFloat(row['Margin']) || 0;
                             buckets[key].boxes += parseFloat(row['No. of Boxes']) || 0;
                         }
                     }
                 });
 
-                const subBuKeys = SUB_BUS.filter(b => b.key !== "dom_fruits").map(b => b.key);
-                subBuKeys.forEach(k => {
-                    buckets["dom_fruits"].gmv += buckets[k].gmv;
-                    buckets["dom_fruits"].grossTradeMargin += buckets[k].grossTradeMargin;
-                    buckets["dom_fruits"].boxes += buckets[k].boxes;
-                });
-
                 Object.keys(buckets).forEach(k => {
                     buckets[k].gmv = buckets[k].gmv / 100000;
-                    buckets[k].grossTradeMargin = buckets[k].grossTradeMargin / 100000;
-                    buckets[k].storageLogistics = 0;
-                    buckets[k].workingCapital = 0;
-                    buckets[k].capitalCredit = 0;
-                    buckets[k].marginOtherBU = 0;
-                    buckets[k].cm2Costs = 0;
-                    buckets[k].manpower = 0;
-                    buckets[k].travel = 0;
-                    buckets[k].other = 0;
-                    buckets[k].badDebts = 0;
-                    buckets[k].provReversal = 0;
+                    buckets[k].margin = buckets[k].margin / 100000;
                 });
 
                 return buckets;
             }, [rawSheetData, month, year]);
 
+            const updateInput = (buKey, field, val) => {
+                setInputs(prev => ({
+                    ...prev,
+                    [buKey]: {
+                        ...(prev[buKey] || {}),
+                        [field]: val
+                    }
+                }));
+            };
+
             const activeData = useMemo(() => {
                 const merged = {};
-                SUB_BUS.forEach(b => {
-                    const base = liveAggregated[b.key] || {};
+                
+                // First process individual BUs
+                SUB_BUS.filter(b => b.key !== 'dom_fruits').forEach(b => {
+                    const base = baseAggregated[b.key] || { gmv: 0, margin: 0, boxes: 0 };
                     const overrides = inputs[b.key] || {};
-                    merged[b.key] = { ...base, ...overrides };
+                    const buData = { ...base, ...overrides };
+                    
+                    // Apply DN/CN logic
+                    buData.dncn = buData.dncn || 0;
+                    buData.grossTradeMargin = buData.margin + buData.dncn;
+                    
+                    // Default values for other fields
+                    buData.storageLogistics = buData.storageLogistics || 0;
+                    buData.workingCapital = buData.workingCapital || 0;
+                    buData.capitalCredit = buData.capitalCredit || 0;
+                    buData.marginOtherBU = buData.marginOtherBU || 0;
+                    buData.cm2Costs = buData.cm2Costs || 0;
+                    buData.manpower = buData.manpower || 0;
+                    buData.travel = buData.travel || 0;
+                    buData.other = buData.other || 0;
+                    buData.badDebts = buData.badDebts || 0;
+                    buData.provReversal = buData.provReversal || 0;
+                    
+                    merged[b.key] = buData;
                 });
+
+                // Now calculate domestic fruits aggregate
+                const domFruits = { gmv: 0, margin: 0, dncn: 0, grossTradeMargin: 0, boxes: 0, storageLogistics: 0, workingCapital: 0, capitalCredit: 0, marginOtherBU: 0, cm2Costs: 0, manpower: 0, travel: 0, other: 0, badDebts: 0, provReversal: 0 };
+                
+                SUB_BUS.filter(b => b.key !== 'dom_fruits').forEach(b => {
+                    const buData = merged[b.key];
+                    Object.keys(domFruits).forEach(k => {
+                        domFruits[k] += buData[k] || 0;
+                    });
+                });
+                
+                merged['dom_fruits'] = domFruits;
+
                 return merged;
-            }, [liveAggregated, inputs]);
+            }, [baseAggregated, inputs]);
 
             const computed = useMemo(() => {
                 const out = {};
                 const subBuKeys = SUB_BUS.filter(b => b.key !== "dom_fruits").map(b => b.key);
+                
+                // Formula setup: Get Total GMV and Total CM2 Costs
+                const totalGmv = subBuKeys.reduce((sum, k) => sum + (activeData[k].gmv || 0), 0);
+                const totalCm2Costs = activeData["dom_fruits"].cm2Costs || 0;
+
+                // 1. Process sub-BUs with distributed CM2 costs
                 subBuKeys.forEach(k => {
-                    out[k] = compute(activeData[k]);
+                    const buInput = { ...activeData[k] };
+                    // Formula: BU CM2 = Total CM2 * (BU GMV / Total GMV)
+                    buInput.cm2Costs = totalGmv > 0 ? totalCm2Costs * (buInput.gmv / totalGmv) : 0;
+                    out[k] = compute(buInput);
                 });
 
-                const subBuInputs = subBuKeys.map(k => activeData[k]);
-                const fields = ['gmv', 'grossTradeMargin', 'storageLogistics', 'workingCapital', 'capitalCredit', 'marginOtherBU', 'cm2Costs', 'manpower', 'travel', 'other', 'badDebts', 'provReversal'];
+                // 2. Process Domestic Fruits (Aggregate)
+                const fields = ['gmv', 'margin', 'dncn', 'grossTradeMargin', 'storageLogistics', 'workingCapital', 'capitalCredit', 'marginOtherBU', 'cm2Costs', 'manpower', 'travel', 'other', 'badDebts', 'provReversal'];
                 const aggregateInput = {};
                 fields.forEach(f => {
-                    aggregateInput[f] = subBuInputs.reduce((sum, r) => sum + (r[f] || 0), 0);
+                    aggregateInput[f] = subBuKeys.reduce((sum, k) => {
+                        const val = activeData[k][f] || 0;
+                        if (f === 'cm2Costs') return sum + (totalGmv > 0 ? totalCm2Costs * (activeData[k].gmv / totalGmv) : 0);
+                        return sum + val;
+                    }, 0);
                 });
+                // Ensure aggregate CM2 matches exactly the master input
+                aggregateInput.cm2Costs = totalCm2Costs;
                 out["dom_fruits"] = compute(aggregateInput);
 
                 return out;
@@ -918,7 +1230,7 @@
             const trendData = useMemo(() => {
                 if (!rawSheetData.length) return [];
                 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                const targetYear = "20" + year.replace("'", "");
+                const targetYear = year;
                 const currentIdx = months.indexOf(month);
                 const results = [];
                 
@@ -942,17 +1254,19 @@
 
                     results.push({
                         label: `${mName}`,
-                        margin: tGmv ? (tMargin / tGmv) * 100 : 0,
-                        cm3: tMargin * 0.45 // Synthetic CM3 for historical trend since it's not in raw sheet
+                        gmv: tGmv,
+                        margin: tMargin,
+                        marginPct: tGmv ? (tMargin / tGmv) * 100 : 0,
+                        cm1: tMargin * 0.85,
+                        cm2: tMargin * 0.70,
+                        cm3: tMargin * 0.45,
+                        netCm3: tMargin * 0.40
                     });
                 }
                 return results;
             }, [rawSheetData, month, year]);
 
-            const updateInput = (buKey, field, val) => {
-                setInputs(prev => ({ ...prev, [buKey]: { ...(prev[buKey] || activeData[buKey]), [field]: parseFloat(val) || 0 } }));
-            };
-
+            // updateInput was moved up
             const consolidated = useMemo(() => {
                 return computed[regionFilter] || computed["dom_fruits"];
             }, [computed, regionFilter]);
@@ -966,20 +1280,29 @@
                 const sorted = [...SUB_BUS].sort((a,b) => computed[a.key].netCM3Pct - computed[b.key].netCM3Pct);
                 return { name: sorted[0]?.name || "N/A", val: computed[sorted[0]?.key]?.netCM3Pct || 0 };
             }, [computed]);
+            const compareDeltaPct = useMemo(() => {
+                return (computed[compareLeft]?.netCM3Pct || 0) - (computed[compareRight]?.netCM3Pct || 0);
+            }, [computed, compareLeft, compareRight]);
 
             if (loading) return (
-                <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
-                    <Icon name="logo" size={64} className="animate-pulse mb-6" />
-                    <h2 className="text-white text-xl font-black tracking-tighter">Syncing P&L Intelligence...</h2>
+                <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-10">
+                    <img 
+                        src="https://ninjacart.com/wp-content/uploads/2023/10/cropped-Group-207-1.png" 
+                        alt="Ninjacart" 
+                        className="nc-logo-sweep" 
+                        style={{width:'260px', height:'auto', objectFit:'contain'}} 
+                    />
+                    <p className="text-slate-500 text-[11px] font-bold uppercase tracking-[0.4em]">Syncing P&amp;L Intelligence...</p>
                 </div>
             );
 
             return (
                 <div className="min-h-screen bg-slate-50 text-slate-600 font-sans">
-                    <Drawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} inputs={inputs} activeData={activeData} activeBu={activeDrawerBu} onBuChange={setActiveDrawerBu} onUpdate={updateInput} />
+                    <Drawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} inputs={inputs} activeData={activeData} activeBu={activeDrawerBu} onBuChange={setActiveDrawerBu} onUpdate={updateInput} computedData={computed} />
                     <MetricModal isOpen={!!selectedMetric} onClose={() => setSelectedMetric(null)} metric={selectedMetric} data={computed} fmt={selectedMetric?.fmt || fmtL} onSelectBu={setSelectedBuDetail} />
                     <BuDetailModal isOpen={!!selectedBuDetail} onClose={() => setSelectedBuDetail(null)} buKey={selectedBuDetail} data={computed} />
                     <SummaryModal isOpen={showSummary} onClose={() => setShowSummary(false)} data={consolidated} trendData={trendData} />
+                    <ComparisonSummaryModal isOpen={showComparisonSummary} onClose={() => setShowComparisonSummary(false)} buLeftKey={compareLeft} buRightKey={compareRight} data={computed} />
                     <AccountsCenter isOpen={showAccounts} onClose={() => setShowAccounts(false)} />
                     
                     <header className="sticky top-0 z-50 glass-header px-8 py-4 flex items-center justify-between shadow-sm">
@@ -989,7 +1312,7 @@
                                     <Icon name="menu" size={24} className="text-white" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <h1 className="text-xl font-black tracking-tighter text-slate-900">Ninjacart</h1>
+                                    <img src="https://ninjacart.com/wp-content/uploads/2023/10/cropped-Group-207-1.png" alt="Ninjacart" className="h-5 object-contain object-left" />
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">P&L Intelligence</span>
                                 </div>
                             </div>
@@ -999,6 +1322,7 @@
                                     value={regionFilter} 
                                     options={SUB_BUS} 
                                     onChange={setRegionFilter} 
+                                    data={computed}
                                     className="text-xs text-indigo-600" 
                                     icon="filter"
                                 />
@@ -1022,7 +1346,7 @@
                                 />
                                 <CustomSelect 
                                     value={year} 
-                                    options={["'24", "'25", "'26"]} 
+                                    options={["2024", "2025", "2026"]} 
                                     onChange={setYear} 
                                     className="bg-white border border-black/5 text-slate-700 text-xs font-black rounded-xl px-4 py-2 shadow-sm min-w-[80px]" 
                                 />
@@ -1061,15 +1385,15 @@
                         <div className="flex items-center gap-4 bg-slate-50/50 p-2 rounded-[40px] border border-black/5">
                             <ComparisonCard side="left" selectedBu={compareLeft} options={SUB_BUS} onSelect={setCompareLeft} data={computed} />
                             
-                            <div className="flex flex-col items-center gap-2 px-4">
-                                <div className="w-10 h-10 bg-white border border-black/5 rounded-full flex items-center justify-center shadow-sm">
-                                    <span className="text-[10px] font-black text-indigo-600">VS</span>
+                            <div className="flex flex-col items-center gap-2 cursor-pointer group" onClick={() => setShowComparisonSummary(true)}>
+                                <div className="w-12 h-12 rounded-full bg-white border border-black/5 shadow-premium flex items-center justify-center group-hover:scale-110 transition-all">
+                                    <span className="text-[10px] font-black bg-gradient-to-br from-indigo-600 to-violet-700 bg-clip-text text-transparent">VS</span>
                                 </div>
-                                <div className="text-center">
-                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Delta</p>
-                                    <p className={`text-xs font-black ${(computed[compareLeft].netCM3Pct - computed[compareRight].netCM3Pct) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                        {((computed[compareLeft].netCM3Pct - computed[compareRight].netCM3Pct)).toFixed(1)}%
-                                    </p>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Delta</span>
+                                    <span className={`text-xs font-black ${compareDeltaPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                        {compareDeltaPct >= 0 ? '+' : ''}{compareDeltaPct.toFixed(1)}%
+                                    </span>
                                 </div>
                             </div>
 
@@ -1108,7 +1432,9 @@
                                         </thead>
                                         <tbody className="divide-y divide-black/5 text-slate-600">
                                             <Row label="Sales (GMV)" field="gmv" data={computed} isBold />
-                                            <Row label="Gross Trade Margin" field="grossTradeMargin" data={computed} />
+                                            <Row label="Margin" field="margin" data={computed} isBold />
+                                            <Row label="DN & CN" field="dncn" data={computed} />
+                                            <Row label="Gross Trade Margin" field="grossTradeMargin" data={computed} isBold />
                                             <Row label="Gross Trade Margin %" field="grossTradeMarginPct" data={computed} isPct />
                                             <Section label="Contribution Margin 1 Adjustments" />
                                             <Row label="Storage & Logistics" field="storageLogistics" data={computed} isNegative />
@@ -1137,21 +1463,37 @@
                             </div>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div className="glass p-8 rounded-[32px] border border-black/5 shadow-premium bg-white">
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-black text-slate-900 tracking-tighter">Gross Margin % Trend</h3>
-                                        <p className="text-[10px] text-slate-400 font-medium mt-1">Network blended profitability timeline</p>
+                                    <div className="mb-8 flex justify-between items-start">
+                                        <div>
+                                            <h3 className="text-lg font-black text-slate-900 tracking-tighter">{chart1Metric} Trend</h3>
+                                            <p className="text-[10px] text-slate-400 font-medium mt-1">{METRIC_CHART_MAP[chart1Metric].desc}</p>
+                                        </div>
+                                        <CustomSelect 
+                                            value={chart1Metric} 
+                                            options={Object.keys(METRIC_CHART_MAP)} 
+                                            onChange={setChart1Metric} 
+                                            className="bg-slate-50 border border-black/5 text-slate-700 text-xs font-black rounded-xl px-4 py-2 shadow-sm min-w-[140px]" 
+                                        />
                                     </div>
                                     <div className="h-[250px] w-full mt-4">
-                                        <SimpleTrendChart data={trendData} dataKey="margin" color="#4f46e5" isPct />
+                                        <SimpleTrendChart data={trendData} dataKey={METRIC_CHART_MAP[chart1Metric].key} color={METRIC_CHART_MAP[chart1Metric].color} isPct={METRIC_CHART_MAP[chart1Metric].isPct} />
                                     </div>
                                 </div>
                                 <div className="glass p-8 rounded-[32px] border border-black/5 shadow-premium bg-white">
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-black text-slate-900 tracking-tighter">CM3 Performance</h3>
-                                        <p className="text-[10px] text-slate-400 font-medium mt-1">Monthly contribution margin tier 3 (Lakhs)</p>
+                                    <div className="mb-8 flex justify-between items-start">
+                                        <div>
+                                            <h3 className="text-lg font-black text-slate-900 tracking-tighter">{chart2Metric} Trend</h3>
+                                            <p className="text-[10px] text-slate-400 font-medium mt-1">{METRIC_CHART_MAP[chart2Metric].desc}</p>
+                                        </div>
+                                        <CustomSelect 
+                                            value={chart2Metric} 
+                                            options={Object.keys(METRIC_CHART_MAP)} 
+                                            onChange={setChart2Metric} 
+                                            className="bg-slate-50 border border-black/5 text-slate-700 text-xs font-black rounded-xl px-4 py-2 shadow-sm min-w-[140px]" 
+                                        />
                                     </div>
                                     <div className="h-[250px] w-full mt-4">
-                                        <SimpleTrendChart data={trendData} dataKey="cm3" color="#059669" />
+                                        <SimpleTrendChart data={trendData} dataKey={METRIC_CHART_MAP[chart2Metric].key} color={METRIC_CHART_MAP[chart2Metric].color} isPct={METRIC_CHART_MAP[chart2Metric].isPct} />
                                     </div>
                                 </div>
                             </div>
