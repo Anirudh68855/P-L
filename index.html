@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -1597,6 +1598,7 @@
                                           mkRow("Net Trade Margin %", c => c.netTradeMarginPct, true),
                                           mkRow("CM2 Costs", c => c.cm2Costs),
                                           mkRow("CM2 Performance", c => c.cm2),
+                                          mkRow("CM3 Costs", c => c.cm3Costs),
                                           mkRow("Manpower Cost", c => c.manpower),
                                           mkRow("Travel Cost", c => c.travel),
                                           mkRow("Other Cost", c => c.other),
@@ -1751,6 +1753,7 @@
                                           <Row label="CM2 Costs" field="cm2Costs" data={computed} isNegative />
                                           <Row label="CM2 Performance" field="cm2" data={computed} isBold />
                                           <Section label="Contribution Margin 3" />
+                                          <Row label="CM3 Costs" field="cm3Costs" data={computed} isBold isNegative />
                                           <Row label="Manpower Cost" field="manpower" data={computed} isNegative />
                                           <Row label="Travel Cost" field="travel" data={computed} isNegative />
                                           <Row label="Other Cost" field="other" data={computed} isNegative />
