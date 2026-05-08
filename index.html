@@ -11,8 +11,6 @@
     <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script>
       tailwind.config = {
           theme: {
@@ -42,13 +40,13 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
       body { font-family: 'Inter', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; width: 100%; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }
-      .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.05); }
-      .glass-header { background: rgba(248, 250, 252, 0.8); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+      .glass { background: rgba(255, 255, 255, 0.7); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.05); }
+      .glass-header { background: rgba(248, 250, 252, 0.8); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.05); }
       .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 4px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
       .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-      .pnl-table tbody tr:hover { background-color: rgba(0,0,0,0.01); }
+      .pnl-table tr:hover { background-color: rgba(0,0,0,0.01); }
       .pnl-section-header { background-color: rgba(241, 245, 249, 0.8); }
       @keyframes zoom-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
       @keyframes zoom-in-fast { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -68,18 +66,6 @@
       }
       @keyframes shimmer-fade { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
       .nc-logo-sweep { animation: color-sweep 2.5s linear infinite, shimmer-fade 2.5s ease-in-out infinite; }
-      @keyframes float-y { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-6px) rotate(3deg); } }
-      @keyframes pulse-soft { 0%, 100% { transform: scale(1); opacity: 0.18; } 50% { transform: scale(1.08); opacity: 0.28; } }
-      @keyframes spin-slow { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
-      @keyframes bar-rise { 0% { transform: scaleY(0.4);} 50% { transform: scaleY(1);} 100% { transform: scaleY(0.4);} }
-      .kpi-float { animation: float-y 4s ease-in-out infinite; }
-      .kpi-pulse { animation: pulse-soft 3s ease-in-out infinite; }
-      .kpi-spin-slow { animation: spin-slow 18s linear infinite; }
-      .kpi-bar { transform-origin: bottom; animation: bar-rise 2.4s ease-in-out infinite; }
-      .kpi-trend-arrow { transition: transform 0.4s ease; }
-      .group:hover .kpi-trend-arrow { transform: translate(2px, -2px); }
-      .group:hover .kpi-icon-bg { transform: scale(1.15) rotate(-6deg); }
-      .kpi-icon-bg { transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
       .nc-loader-ring {
           width: 110px; height: 110px; border-radius: 50%;
           background: conic-gradient(#F89E22 0deg, #33B34A 90deg, #EC008C 180deg, #2D3092 270deg, #F89E22 360deg);
@@ -146,33 +132,6 @@
       const Cell = Lib.Cell || (() => null);
       const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRk_7uILshEOrsvZsMZgDEYQLFJXWxXjV0jGJQ2lyXmMdJnyZdiweYwASZHaug7rw00HzvDjRKq3g_N/pub?gid=1929643988&single=true&output=csv";
 
-      // Lovable Cloud (Supabase) REST config — used to persist manual entries permanently
-      const SUPABASE_URL = "https://oqlumqqjnkkavqnjzbxy.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xbHVtcXFqbmtrYXZxbmp6Ynh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NjA5NTMsImV4cCI6MjA5MzQzNjk1M30.SS7WqQEMhsojmTEZpSF_2lH84DR6UDAn6KfqQwRbH6Q";
-      const sbHeaders = {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-          "Content-Type": "application/json"
-      };
-      const fetchOverrides = async (year, month) => {
-          const url = `${SUPABASE_URL}/rest/v1/manual_overrides?year=eq.${encodeURIComponent(year)}&month=eq.${encodeURIComponent(month)}&select=bu_key,field,value`;
-          try {
-              const r = await fetch(url, { headers: sbHeaders });
-              if (!r.ok) return [];
-              return await r.json();
-          } catch (e) { console.error("fetchOverrides failed", e); return []; }
-      };
-      const saveOverride = async (year, month, bu_key, field, value) => {
-          const url = `${SUPABASE_URL}/rest/v1/manual_overrides?on_conflict=year,month,bu_key,field`;
-          try {
-              await fetch(url, {
-                  method: "POST",
-                  headers: { ...sbHeaders, "Prefer": "resolution=merge-duplicates,return=minimal" },
-                  body: JSON.stringify({ year, month, bu_key, field, value })
-              });
-          } catch (e) { console.error("saveOverride failed", e); }
-      };
-
       const SUB_BUS = [
           { key: "dom_fruits", name: "Domestic Fruits", short: "Dom. Fruits" },
           { key: "pomo_ka", name: "Pomo KA", short: "Pomo KA" },
@@ -219,8 +178,7 @@
           const gmv = parseFloat(i.gmv) || 0;
           const margin = parseFloat(i.margin) || 0;
           const dncn = parseFloat(i.dncn) || 0;
-          // Gross Trade Margin is ALWAYS derived = Margin + DN & CN (never read raw, no override)
-          const grossTradeMargin = margin + dncn;
+          const grossTradeMargin = parseFloat(i.grossTradeMargin) || 0;
           const grossTradeMarginPct = gmv ? (grossTradeMargin / gmv) * 100 : 0;
           const storageLogistics = parseFloat(i.storageLogistics) || 0;
           const workingCapital = parseFloat(i.workingCapital) || 0;
@@ -263,19 +221,12 @@
       };
 
       const fmtL = (val, dec = 1) => {
-          const n = Number(val);
-          if (!isFinite(n)) return "₹0.0L";
-          const isNeg = n < 0;
-          const absVal = Math.abs(n);
-          const str = `₹${absVal.toLocaleString("en-IN", { minimumFractionDigits: dec, maximumFractionDigits: dec })}L`;
+          const isNeg = val < 0;
+          const absVal = Math.abs(val);
+          const str = `₹${absVal.toFixed(dec)}L`;
           return isNeg ? `(${str})` : str;
       };
-      const fmtPct = (val) => {
-          const n = Number(val);
-          if (!isFinite(n)) return "0.0%";
-          const rounded = Math.round(n * 10) / 10;
-          return `${rounded.toFixed(1)}%`;
-      };
+      const fmtPct = (val) => `${val.toFixed(1)}%`;
 
       const Icon = ({ name, size = 16, className = "", onClick }) => {
           const icons = {
@@ -310,13 +261,7 @@
               "file-spreadsheet": <Fragment><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M8 13h2" /><path d="M14 13h2" /><path d="M8 17h2" /><path d="M14 17h2" /></Fragment>,
               "file-text": <Fragment><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M8 13h8" /><path d="M8 17h8" /></Fragment>,
               "check-circle": <Fragment><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></Fragment>,
-                user: <Fragment><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></Fragment>,
-              "trending-up": <Fragment><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></Fragment>,
-              "bar-chart": <Fragment><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></Fragment>,
-              wallet: <Fragment><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h16v4"/><path d="M3 7v12a2 2 0 0 0 2 2h16v-5"/><circle cx="17" cy="14" r="1.5"/></Fragment>,
-              percent: <Fragment><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></Fragment>,
-              award: <Fragment><circle cx="12" cy="8" r="6"/><path d="M15.5 12.5L17 22l-5-3-5 3 1.5-9.5"/></Fragment>,
-              coins: <Fragment><circle cx="9" cy="9" r="6"/><path d="M21 15a6 6 0 1 1-9.33 5"/><path d="M7 9h.01"/><path d="M11 9h.01"/></Fragment>
+              user: <Fragment><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></Fragment>
           };
           return (
               <svg onClick={onClick} viewBox="0 0 24 24" fill="none" stroke={name === 'logo' ? undefined : "currentColor"} strokeWidth={name === 'logo' ? "3" : "2.5"} strokeLinecap="round" strokeLinejoin="round" style={{width: size, height: size}} className={`${className} ${onClick ? 'cursor-pointer' : ''}`}>
@@ -449,64 +394,30 @@
       const Drawer = ({ isOpen, onClose, inputs, activeData, activeBu, onBuChange, onUpdate, computedData }) => {
           if (!isOpen) return null;
           const isAggregate = activeBu === 'dom_fruits';
-          const rawBu = activeData[activeBu] || {};
-          const overridesBu = inputs[activeBu] || {};
-          const computedBu = (computedData && computedData[activeBu]) || {};
-          // These three values can come from manual DB entries or aggregate distribution.
-          // The computed object is the single source of truth for what the table shows,
-          // so the drawer must read from it too instead of falling back to stale raw rows.
-          const displayedCost = (field) => computedBu[field] ?? rawBu[field] ?? 0;
-          const buData = {
-              gmv: 0, margin: 0, dncn: 0, grossTradeMargin: 0, storageLogistics: 0,
-              workingCapital: 0, capitalCredit: 0, marginOtherBU: 0, cm2Costs: 0,
-              manpower: 0, travel: 0, other: 0, badDebts: 0, provReversal: 0,
-              ...rawBu,
-              cm2Costs: displayedCost('cm2Costs'),
-              workingCapital: displayedCost('workingCapital'),
-              capitalCredit: displayedCost('capitalCredit'),
+          const buData = activeData[activeBu] || {
+              gmv: 0, grossTradeMargin: 0, storageLogistics: 0, workingCapital: 0,
+              capitalCredit: 0, marginOtherBU: 0, cm2Costs: 0, manpower: 0,
+              travel: 0, other: 0, badDebts: 0, provReversal: 0
           };
 
           const InputField = ({ label, field, val, readOnly }) => {
-              const isDisabled = !!readOnly;
-              const displayVal = val;
-
-              const [draft, setDraft] = React.useState(Number(displayVal || 0).toFixed(2));
-              const [editing, setEditing] = React.useState(false);
-              React.useEffect(() => { if (!editing) setDraft(Number(displayVal || 0).toFixed(2)); }, [displayVal, editing]);
-              React.useEffect(() => {
-                  setEditing(false);
-                  setDraft(Number(displayVal || 0).toFixed(2));
-              }, [activeBu, field]);
-
-              const commit = () => {
-                  setEditing(false);
-                  const n = parseFloat(draft);
-                  if (!isNaN(n)) onUpdate(activeBu, field, n);
-                  else setDraft(Number(displayVal || 0).toFixed(2));
-              };
+              const isCm2Field = field === 'cm2Costs';
+              // CM2 is editable ONLY at aggregate level. Others are editable ONLY at sub-BU level.
+              const isDisabled = readOnly || (isCm2Field ? !isAggregate : isAggregate);
+              const displayVal = isCm2Field && !isAggregate ? (computedData[activeBu]?.cm2Costs || 0) : val;
 
               return (
-                  <div className={`flex flex-col gap-1 ${isDisabled ? 'opacity-60' : ''}`}>
+                  <div className={`flex flex-col gap-1 ${isDisabled ? 'opacity-50' : ''}`}>
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          {label}
+                          {label} {isCm2Field && !isAggregate && <span className="text-[8px] text-indigo-500 font-black tracking-tighter">(DISTRIBUTED)</span>}
                       </label>
                       <div className={`flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 transition-all ${isDisabled ? 'cursor-not-allowed bg-slate-100/50' : 'focus-within:border-slate-900 focus-within:bg-white'}`}>
                           <span className="text-slate-400 text-xs mr-2 font-bold">₹</span>
                           <input
-                              type="text"
-                              inputMode="decimal"
-                              value={draft}
+                              type="number"
+                              value={Number(displayVal).toFixed(2)}
                               disabled={isDisabled}
-                              onFocus={(e) => { if (!isDisabled) { setEditing(true); e.currentTarget.select(); } }}
-                              onChange={(e) => {
-                                  const next = e.target.value;
-                                  if (/^-?\d*\.?\d*$/.test(next)) setDraft(next);
-                              }}
-                              onBlur={commit}
-                              onKeyDown={(e) => {
-                                  if (e.key === 'Enter') e.currentTarget.blur();
-                                  if (e.key === 'Escape') { setDraft(Number(displayVal || 0).toFixed(2)); setEditing(false); e.currentTarget.blur(); }
-                              }}
+                              onChange={(e) => onUpdate(activeBu, field, e.target.value)}
                               className="bg-transparent text-sm font-bold text-slate-900 outline-none w-full disabled:cursor-not-allowed"
                           />
                           <span className="text-slate-400 text-[10px] ml-2 font-bold uppercase">L</span>
@@ -535,8 +446,8 @@
                               </h3>
                               {isAggregate && <p className="text-[10px] text-slate-400 font-medium">This vertical is the aggregate of all sub-BUs. Edit individual BUs to change these values.</p>}
                           </div>
-                          <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">Gross Margin</div><div className="grid grid-cols-2 gap-6"><InputField label="GMV" field="gmv" val={buData.gmv} /><InputField label="Base Margin" field="margin" val={buData.margin} /><InputField label="DN & CN" field="dncn" val={buData.dncn} /><InputField label="Gross Trade Margin (= Margin + DN & CN)" field="grossTradeMargin" val={(parseFloat(buData.margin)||0) + (parseFloat(buData.dncn)||0)} readOnly /></div></div>
-                          <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">CM1 Adjustments</div><div className="grid grid-cols-2 gap-6"><InputField label="Other costs (Storage & Logistics)" field="storageLogistics" val={buData.storageLogistics} /><InputField label="Working Capital Cost" field="workingCapital" val={buData.workingCapital} /><InputField label="Capital Credit Cost (1%)" field="capitalCredit" val={buData.capitalCredit} /><InputField label="Margin from Other BUs (+)" field="marginOtherBU" val={buData.marginOtherBU} /></div></div>
+                          <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">Gross Margin</div><div className="grid grid-cols-2 gap-6"><InputField label="GMV" field="gmv" val={buData.gmv} readOnly /><InputField label="Base Margin" field="margin" val={buData.margin} readOnly /><InputField label="DN & CN" field="dncn" val={buData.dncn} /><InputField label="Gross Trade Margin" field="grossTradeMargin" val={buData.grossTradeMargin} readOnly /></div></div>
+                          <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">CM1 Adjustments</div><div className="grid grid-cols-2 gap-6"><InputField label="Storage / Logistics" field="storageLogistics" val={buData.storageLogistics} /><InputField label="Working Capital Cost" field="workingCapital" val={buData.workingCapital} /><InputField label="Capital Credit Cost (1%)" field="capitalCredit" val={buData.capitalCredit} /><InputField label="Margin from Other BUs (+)" field="marginOtherBU" val={buData.marginOtherBU} /></div></div>
                           <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">CM2</div><InputField label="CM2 Costs" field="cm2Costs" val={buData.cm2Costs} /></div>
                           <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">CM3</div><div className="grid grid-cols-2 gap-6"><InputField label="Manpower Cost" field="manpower" val={buData.manpower} /><InputField label="Travel Cost" field="travel" val={buData.travel} /><InputField label="Other Cost" field="other" val={buData.other} /></div></div>
                           <div className="p-6 rounded-3xl border border-slate-100 space-y-6 relative"><div className="absolute -top-3 left-6 bg-white px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 rounded-full">Provisions</div><div className="grid grid-cols-2 gap-6"><InputField label="Bad Debts / Advances Provision" field="badDebts" val={buData.badDebts} /><InputField label="Provision Reversal (+)" field="provReversal" val={buData.provReversal} /></div></div>
@@ -650,7 +561,7 @@
                           <DetailRow label="Total Sales (GMV)" val={d.gmv} isBold />
                           <DetailRow label="Gross Trade Margin" val={d.grossTradeMargin} />
                           <DetailRow label="Gross Trade Margin %" val={d.grossTradeMarginPct} isPct />
-                          <DetailRow label="(-) Other costs (Storage & Logistics)" val={d.storageLogistics} isNegative />
+                          <DetailRow label="(-) Storage & Logistics" val={d.storageLogistics} isNegative />
                           <DetailRow label="(-) Working Capital Cost" val={d.workingCapital} isNegative />
                           <DetailRow label="(-) Capital/Credit Cost (1%)" val={d.capitalCredit} isNegative />
                           <DetailRow label="Net Trade Margin" val={d.netTradeMargin} isBold />
@@ -671,7 +582,7 @@
           );
       };
 
-      const KPI = ({ label, val, trend, isPos, sub, onClick, color = "indigo", icon = "bar-chart" }) => {
+      const KPI = ({ label, val, trend, isPos, sub, onClick, color = "indigo" }) => {
           const themes = {
               orange: "from-orange-500 to-rose-500",
               emerald: "from-emerald-500 to-teal-600",
@@ -683,36 +594,30 @@
 
           return (
               <div onClick={onClick} className={`relative p-6 rounded-[40px] overflow-hidden cursor-pointer group transition-all duration-500 hover:scale-[1.02] hover:shadow-premium bg-gradient-to-br ${theme} shadow-lg border border-white/10`}>
-
-                  {/* Decorative animated icon backdrop */}
-                  <div className="kpi-icon-bg absolute -right-4 -bottom-4 w-28 h-28 rounded-full bg-white/10 flex items-center justify-center pointer-events-none">
-                      <div className="kpi-float text-white/30">
-                          <Icon name={icon} size={64} />
-                      </div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-1000"></div>
+                  <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-20 transition-all duration-700">
+                      <img src="https://ninjacart.com/wp-content/uploads/2023/10/cropped-Group-207-1.png" alt="" className="w-24 h-auto object-contain brightness-0 invert" />
                   </div>
-                  <div className="kpi-pulse absolute -left-6 -top-6 w-24 h-24 rounded-full bg-white/15 pointer-events-none"></div>
 
                   <div className="flex justify-between items-start mb-6 relative z-10">
-                      <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-white/25 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-sm">
-                              <Icon name={icon} size={14} className="text-white" />
-                          </div>
-                          <span className="text-[10px] font-black text-white/90 uppercase tracking-[0.2em]">{label}</span>
-                      </div>
+                      <span className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em]">{label}</span>
                       {trend && (
                           <div className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 flex items-center gap-1">
-                              <Icon name="trending-up" size={10} className={`text-white kpi-trend-arrow ${!isPos ? 'rotate-180' : ''}`} />
+                              <Icon name="trending" size={10} className={`text-white ${!isPos ? 'rotate-180' : ''}`} />
                               <span className="text-[9px] font-black text-white">{trend}</span>
                           </div>
                       )}
                   </div>
 
                   <div className="relative z-10 mb-2">
-                      <h3 className="text-3xl font-black tracking-tighter text-white drop-shadow-sm">{val}</h3>
+                      <h3 className="text-3xl font-black tracking-tighter text-white">{val}</h3>
                   </div>
 
                   <div className="relative z-10 flex items-center justify-between">
-                      {sub && <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{sub}</p>}
+                      {sub && <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{sub}</p>}
+                      <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                          <Icon name="chevron" size={14} className="text-white -rotate-90" />
+                      </div>
                   </div>
               </div>
           );
@@ -784,6 +689,7 @@
 
           return (
               <div className="flex-1 glass p-6 rounded-[32px] border border-black/5 bg-white shadow-sm flex flex-col gap-4 group hover:shadow-md transition-all relative">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 opacity-50"></div>
                   <div className="flex items-center justify-between relative z-10">
                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{side === 'left' ? 'Primary View' : 'Benchmark View'}</span>
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isPos ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
@@ -937,7 +843,7 @@
                                   <div className="space-y-1">
                                       <CompRow label="Sales (GMV)" field="gmv" isBold />
                                       <CompRow label="Gross Trade Margin %" field="grossTradeMarginPct" isPct />
-                                      <CompRow label="Other costs (Storage & Logistics)" field="storageLogistics" isNegative />
+                                      <CompRow label="Storage & Logistics" field="storageLogistics" isNegative />
                                       <CompRow label="Net Trade Margin" field="netTradeMargin" isBold />
                                       <CompRow label="CM2 Performance" field="cm2" isBold />
                                       <CompRow label="Final Net CM3 %" field="netCM3Pct" isPct isBold />
@@ -1019,7 +925,7 @@
                                       <h3 className="text-xl font-black text-slate-900 tracking-tight">CM2 Operational Efficiency</h3>
                                   </div>
                                   <p className="text-lg font-medium text-slate-600 leading-relaxed">
-                                      Other costs (Storage & Logistics) are consuming <span className="text-slate-900 font-black">{fmtL(data.storageLogistics)}</span>.
+                                      Operational costs (Logistics & Storage) are consuming <span className="text-slate-900 font-black">{fmtL(data.storageLogistics)}</span>.
                                       Working capital utilization remains optimized with a total cost of <span className="text-rose-600 font-black">{fmtL(data.workingCapital)}</span>.
                                   </p>
                                   <div className="grid grid-cols-2 gap-4">
@@ -1222,19 +1128,13 @@
                   if (rowYear === yearFull && (rowMonth === targetMonth || rowMonth.includes(targetMonth))) {
                       const key = mapRowToBU(row);
                       if (key && key !== "dom_fruits" && buckets[key]) {
-                          const salesReceivable = parseFloat(row['Sales Receivable']) || 0;
                           buckets[key].gmv += parseFloat(row['Sales (GMV)']) || 0;
-                          // Margin should only include fully received/closed rows; open receivable rows
-                          // were making Mango show 1.0L instead of 0.8L.
-                          if (salesReceivable <= 0) buckets[key].margin += parseFloat(row['Margin']) || 0;
+                          buckets[key].margin += parseFloat(row['Margin']) || 0;
                           buckets[key].boxes += parseFloat(row['No. of Boxes']) || 0;
                       }
                   }
               });
 
-              // Convert to Lakhs but KEEP full precision for math.
-              // Display formatters (fmtL / fmtPct) handle rounding at render time,
-              // so derived values like Gross Trade Margin % stay accurate.
               Object.keys(buckets).forEach(k => {
                   buckets[k].gmv = buckets[k].gmv / 100000;
                   buckets[k].margin = buckets[k].margin / 100000;
@@ -1242,22 +1142,6 @@
 
               return buckets;
           }, [rawSheetData, month, year]);
-
-          // Load persisted manual overrides for the active year/month from Lovable Cloud
-          useEffect(() => {
-              let cancelled = false;
-              (async () => {
-                  const rows = await fetchOverrides(year, month);
-                  if (cancelled) return;
-                  const grouped = {};
-                  rows.forEach(r => {
-                      grouped[r.bu_key] = grouped[r.bu_key] || {};
-                      grouped[r.bu_key][r.field] = Number(r.value);
-                  });
-                  setInputs(grouped);
-              })();
-              return () => { cancelled = true; };
-          }, [year, month]);
 
           const updateInput = (buKey, field, val) => {
               setInputs(prev => ({
@@ -1267,8 +1151,6 @@
                       [field]: val
                   }
               }));
-              // Persist to Lovable Cloud (fire-and-forget)
-              saveOverride(year, month, buKey, field, val);
           };
 
           const activeData = useMemo(() => {
@@ -1280,10 +1162,11 @@
                   const overrides = inputs[b.key] || {};
                   const buData = { ...base, ...overrides };
 
+                  // Apply DN/CN logic
                   buData.dncn = buData.dncn || 0;
-                  // Gross Trade Margin is ALWAYS derived = Margin + DN & CN (no manual override)
-                  buData.grossTradeMargin = (parseFloat(buData.margin) || 0) + (parseFloat(buData.dncn) || 0);
+                  buData.grossTradeMargin = buData.margin + buData.dncn;
 
+                  // Default values for other fields
                   buData.storageLogistics = buData.storageLogistics || 0;
                   buData.workingCapital = buData.workingCapital || 0;
                   buData.capitalCredit = buData.capitalCredit || 0;
@@ -1298,15 +1181,16 @@
                   merged[b.key] = buData;
               });
 
-              // Calculate domestic fruits aggregate
+              // Now calculate domestic fruits aggregate
               const domFruits = { gmv: 0, margin: 0, dncn: 0, grossTradeMargin: 0, boxes: 0, storageLogistics: 0, workingCapital: 0, capitalCredit: 0, marginOtherBU: 0, cm2Costs: 0, manpower: 0, travel: 0, other: 0, badDebts: 0, provReversal: 0 };
+
               SUB_BUS.filter(b => b.key !== 'dom_fruits').forEach(b => {
                   const buData = merged[b.key];
-                  Object.keys(domFruits).forEach(k => { domFruits[k] += buData[k] || 0; });
+                  Object.keys(domFruits).forEach(k => {
+                      domFruits[k] += buData[k] || 0;
+                  });
               });
-              // Apply aggregate-level manual overrides (so editing the "Domestic Fruits" tab works)
-              const aggOverrides = inputs['dom_fruits'] || {};
-              Object.keys(aggOverrides).forEach(k => { domFruits[k] = aggOverrides[k]; });
+
               merged['dom_fruits'] = domFruits;
 
               return merged;
@@ -1316,43 +1200,34 @@
               const out = {};
               const subBuKeys = SUB_BUS.filter(b => b.key !== "dom_fruits").map(b => b.key);
 
-              // Totals from aggregate (Domestic Fruits) — these are GMV-distributed across BUs
+              // Formula setup: Get Total GMV and Total CM2 Costs
               const totalGmv = subBuKeys.reduce((sum, k) => sum + (activeData[k].gmv || 0), 0);
               const totalCm2Costs = activeData["dom_fruits"].cm2Costs || 0;
-              const totalWorkingCapital = activeData["dom_fruits"].workingCapital || 0;
-              const totalCapitalCredit = activeData["dom_fruits"].capitalCredit || 0;
 
-              const distribute = (total, buGmv) => totalGmv > 0 ? total * (buGmv / totalGmv) : 0;
-
-              // 1. Process sub-BUs. Distribute aggregate (Domestic Fruits) costs by GMV ONLY when
-              //    the sub-BU has no manual override for that field.
+              // 1. Process sub-BUs with distributed CM2 costs
               subBuKeys.forEach(k => {
                   const buInput = { ...activeData[k] };
-                  const overrides = inputs[k] || {};
-                  if (overrides.cm2Costs === undefined)       buInput.cm2Costs = distribute(totalCm2Costs, buInput.gmv);
-                  if (overrides.workingCapital === undefined) buInput.workingCapital = distribute(totalWorkingCapital, buInput.gmv);
-                  if (overrides.capitalCredit === undefined)  buInput.capitalCredit = distribute(totalCapitalCredit, buInput.gmv);
+                  // Formula: BU CM2 = Total CM2 * (BU GMV / Total GMV)
+                  buInput.cm2Costs = totalGmv > 0 ? totalCm2Costs * (buInput.gmv / totalGmv) : 0;
                   out[k] = compute(buInput);
               });
 
-
               // 2. Process Domestic Fruits (Aggregate)
               const fields = ['gmv', 'margin', 'dncn', 'grossTradeMargin', 'storageLogistics', 'workingCapital', 'capitalCredit', 'marginOtherBU', 'cm2Costs', 'manpower', 'travel', 'other', 'badDebts', 'provReversal'];
-              const distributedFields = new Set(['cm2Costs', 'workingCapital', 'capitalCredit']);
-              const aggOverrides = inputs['dom_fruits'] || {};
               const aggregateInput = {};
               fields.forEach(f => {
-                  if (distributedFields.has(f) || aggOverrides[f] !== undefined) {
-                      // Use the master input directly (manual override or distributed master)
-                      aggregateInput[f] = activeData["dom_fruits"][f] || 0;
-                  } else {
-                      aggregateInput[f] = subBuKeys.reduce((sum, k) => sum + (activeData[k][f] || 0), 0);
-                  }
+                  aggregateInput[f] = subBuKeys.reduce((sum, k) => {
+                      const val = activeData[k][f] || 0;
+                      if (f === 'cm2Costs') return sum + (totalGmv > 0 ? totalCm2Costs * (activeData[k].gmv / totalGmv) : 0);
+                      return sum + val;
+                  }, 0);
               });
+              // Ensure aggregate CM2 matches exactly the master input
+              aggregateInput.cm2Costs = totalCm2Costs;
               out["dom_fruits"] = compute(aggregateInput);
 
               return out;
-          }, [activeData, inputs]);
+          }, [activeData]);
 
           const trendData = useMemo(() => {
               if (!rawSheetData.length) return [];
@@ -1497,174 +1372,43 @@
                           </div>
                           <div className="flex gap-2">
                               <button
-                                  onClick={async () => {
-                                      const { jsPDF } = window.jspdf;
-                                      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-                                      const pageW = doc.internal.pageSize.getWidth();
-                                      const pageH = doc.internal.pageSize.getHeight();
-
-                                      // Load Ninjacart logo as data URL
-                                      let logoData = null;
-                                      try {
-                                          const res = await fetch("/ninjacart-logo.png");
-                                          const blob = await res.blob();
-                                          logoData = await new Promise((resolve) => {
-                                              const r = new FileReader();
-                                              r.onloadend = () => resolve(r.result);
-                                              r.readAsDataURL(blob);
-                                          });
-                                      } catch (e) { /* fallback to text mark */ }
-
-                                      // === HEADER BAND ===
-                                      doc.setFillColor(79, 70, 229);
-                                      doc.rect(0, 0, pageW, 80, "F");
-                                      doc.setFillColor(99, 102, 241);
-                                      doc.rect(0, 80, pageW, 4, "F");
-
-                                      // Logo (real Ninjacart wordmark) on white pill
-                                      if (logoData) {
-                                          const logoH = 32, logoW = logoH * (1185 / 270);
-                                          doc.setFillColor(255, 255, 255);
-                                          doc.roundedRect(24, 24, logoW + 20, logoH + 8, 6, 6, "F");
-                                          doc.addImage(logoData, "PNG", 34, 28, logoW, logoH);
-                                      } else {
-                                          doc.setTextColor(255, 255, 255);
-                                          doc.setFontSize(22);
-                                          doc.setFont("helvetica", "bold");
-                                          doc.text("NINJACART", 30, 50);
-                                      }
-
-                                      // Right side: doc title & period
-                                      doc.setTextColor(255, 255, 255);
-                                      doc.setFontSize(22);
-                                      doc.setFont("helvetica", "bold");
-                                      doc.text("P&L STATEMENT", pageW - 30, 42, { align: "right" });
-                                      doc.setFontSize(10);
-                                      doc.setFont("helvetica", "normal");
-                                      doc.text(`Period: ${month} ${year}`, pageW - 30, 60, { align: "right" });
-
-
-                                      // === KPI CARDS ===
-                                      // jsPDF default font (helvetica) doesn't support the ₹ glyph — strip it.
-                                      // Also strip trailing L since unit is declared in footer/note.
-                                      const stripGlyphs = (s) => String(s).replace(/₹/g, "").replace(/L(\)?)$/, "$1").trim();
-                                      const fmtMoney = (v) => stripGlyphs(fmtL(v || 0));
-                                      const kpis = [
-                                          { l: "Total GMV (Lakhs)", v: fmtMoney(consolidated.gmv), c: [251, 146, 60] },
-                                          { l: "Gross Margin %", v: fmtPct(consolidated.grossTradeMarginPct), c: [16, 185, 129] },
-                                          { l: "CM2 (Lakhs)", v: fmtMoney(consolidated.cm2), c: [59, 130, 246] },
-                                          { l: "CM3 (Lakhs)", v: fmtMoney(consolidated.cm3), c: [99, 102, 241] },
-                                          { l: "Net CM3 (Lakhs)", v: fmtMoney(consolidated.netCM3), c: [244, 63, 94] },
+                                  onClick={() => {
+                                      const rows = [
+                                          ["Metric", ...SUB_BUS.map(b => b.name)],
+                                          ["Sales (GMV)", ...SUB_BUS.map(b => (computed[b.key]?.gmv || 0).toFixed(2))],
+                                          ["Margin", ...SUB_BUS.map(b => (computed[b.key]?.margin || 0).toFixed(2))],
+                                          ["DN & CN", ...SUB_BUS.map(b => (computed[b.key]?.dncn || 0).toFixed(2))],
+                                          ["Gross Trade Margin", ...SUB_BUS.map(b => (computed[b.key]?.grossTradeMargin || 0).toFixed(2))],
+                                          ["Gross Trade Margin %", ...SUB_BUS.map(b => (computed[b.key]?.grossTradeMarginPct || 0).toFixed(2))],
+                                          ["Storage & Logistics", ...SUB_BUS.map(b => (computed[b.key]?.storageLogistics || 0).toFixed(2))],
+                                          ["Working Capital Cost", ...SUB_BUS.map(b => (computed[b.key]?.workingCapital || 0).toFixed(2))],
+                                          ["Capital Credit Cost (1%)", ...SUB_BUS.map(b => (computed[b.key]?.capitalCredit || 0).toFixed(2))],
+                                          ["Margin from Other BUs", ...SUB_BUS.map(b => (computed[b.key]?.marginOtherBU || 0).toFixed(2))],
+                                          ["Net Trade Margin", ...SUB_BUS.map(b => (computed[b.key]?.netTradeMargin || 0).toFixed(2))],
+                                          ["Net Trade Margin %", ...SUB_BUS.map(b => (computed[b.key]?.netTradeMarginPct || 0).toFixed(2))],
+                                          ["CM2 Costs", ...SUB_BUS.map(b => (computed[b.key]?.cm2Costs || 0).toFixed(2))],
+                                          ["CM2 Performance", ...SUB_BUS.map(b => (computed[b.key]?.cm2 || 0).toFixed(2))],
+                                          ["Manpower Cost", ...SUB_BUS.map(b => (computed[b.key]?.manpower || 0).toFixed(2))],
+                                          ["Travel Cost", ...SUB_BUS.map(b => (computed[b.key]?.travel || 0).toFixed(2))],
+                                          ["Other Cost", ...SUB_BUS.map(b => (computed[b.key]?.other || 0).toFixed(2))],
+                                          ["CM3 Performance", ...SUB_BUS.map(b => (computed[b.key]?.cm3 || 0).toFixed(2))],
+                                          ["CM3 %", ...SUB_BUS.map(b => (computed[b.key]?.cm3Pct || 0).toFixed(2))],
+                                          ["Bad Debts / Advances Provision", ...SUB_BUS.map(b => (computed[b.key]?.badDebts || 0).toFixed(2))],
+                                          ["Provision Reversal", ...SUB_BUS.map(b => (computed[b.key]?.provReversal || 0).toFixed(2))],
+                                          ["Net CM3 (Post-Prov)", ...SUB_BUS.map(b => (computed[b.key]?.netCM3 || 0).toFixed(2))],
+                                          ["Final Net CM3 %", ...SUB_BUS.map(b => (computed[b.key]?.netCM3Pct || 0).toFixed(2))],
                                       ];
-                                      const kpiY = 124, kpiH = 44, gap = 10;
-                                      const kpiW = (pageW - 60 - gap * 4) / 5;
-                                      kpis.forEach((k, i) => {
-                                          const x = 30 + i * (kpiW + gap);
-                                          doc.setFillColor(255, 255, 255);
-                                          doc.setDrawColor(226, 232, 240);
-                                          doc.roundedRect(x, kpiY, kpiW, kpiH, 4, 4, "FD");
-                                          doc.setFillColor(k.c[0], k.c[1], k.c[2]);
-                                          doc.roundedRect(x, kpiY, 3, kpiH, 1.5, 1.5, "F");
-                                          doc.setFontSize(7);
-                                          doc.setTextColor(100, 116, 139);
-                                          doc.setFont("helvetica", "bold");
-                                          doc.text(k.l.toUpperCase(), x + 10, kpiY + 14);
-                                          doc.setFontSize(13);
-                                          doc.setTextColor(15, 23, 42);
-                                          doc.text(k.v, x + 10, kpiY + 32);
-                                      });
-
-                                      // === TABLE ===
-                                      // Use stripGlyphs to remove ₹ (unsupported in default font) and trailing L.
-                                      const fmtNum = (v) => stripGlyphs(fmtL(v || 0));
-                                      const head = [["Metric", ...SUB_BUS.map(b => b.short || b.name)]];
-                                      const mkRow = (lbl, pick, pct) => [lbl, ...SUB_BUS.map(b => {
-                                          const v = pick(computed[b.key] || {});
-                                          if (pct) return fmtPct(v || 0);
-                                          return fmtNum(v);
-                                      })];
-                                      const body = [
-                                          mkRow("Sales (GMV)", c => c.gmv),
-                                          mkRow("Margin", c => c.margin),
-                                          mkRow("DN & CN", c => c.dncn),
-                                          mkRow("Gross Trade Margin", c => c.grossTradeMargin),
-                                          mkRow("Gross Trade Margin %", c => c.grossTradeMarginPct, true),
-                                          mkRow("Other costs (Storage & Logistics)", c => c.storageLogistics),
-                                          mkRow("Working Capital Cost", c => c.workingCapital),
-                                          mkRow("Capital Credit Cost (1%)", c => c.capitalCredit),
-                                          mkRow("Margin from Other BUs", c => c.marginOtherBU),
-                                          mkRow("Net Trade Margin", c => c.netTradeMargin),
-                                          mkRow("Net Trade Margin %", c => c.netTradeMarginPct, true),
-                                          mkRow("CM2 Costs", c => c.cm2Costs),
-                                          mkRow("CM2 Performance", c => c.cm2),
-                                          mkRow("Manpower Cost", c => c.manpower),
-                                          mkRow("Travel Cost", c => c.travel),
-                                          mkRow("Other Cost", c => c.other),
-                                          mkRow("CM3 Performance", c => c.cm3),
-                                          mkRow("CM3 %", c => c.cm3Pct, true),
-                                          mkRow("Bad Debts / Adv. Provision", c => c.badDebts),
-                                          mkRow("Provision Reversal", c => c.provReversal),
-                                          mkRow("Net CM3 (Post-Prov)", c => c.netCM3),
-                                          mkRow("Final Net CM3 %", c => c.netCM3Pct, true),
-                                      ];
-
-                                      doc.autoTable({
-                                          head, body,
-                                          startY: kpiY + kpiH + 22,
-                                          margin: { left: 20, right: 20, bottom: 50 },
-                                          tableWidth: pageW - 40,
-                                          styles: { fontSize: 7, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 }, lineColor: [226, 232, 240], lineWidth: 0.3, textColor: [15, 23, 42], overflow: "linebreak", valign: "middle" },
-                                          headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: "bold", fontSize: 7.5, halign: "center", cellPadding: 4 },
-                                          alternateRowStyles: { fillColor: [248, 250, 252] },
-                                          columnStyles: (() => {
-                                              const cols = { 0: { fontStyle: "bold", cellWidth: 110, fillColor: [241, 245, 249], halign: "left" } };
-                                              const buCount = SUB_BUS.length;
-                                              const remaining = (pageW - 40) - 110;
-                                              const each = remaining / buCount;
-                                              for (let i = 1; i <= buCount; i++) cols[i] = { cellWidth: each, halign: "right" };
-                                              return cols;
-                                          })(),
-                                          bodyStyles: { halign: "right" },
-                                          didParseCell: (d) => {
-                                              if (d.column.index === 0) d.cell.styles.halign = "left";
-                                              const lbl = body[d.row.index] && body[d.row.index][0];
-                                              if (["Gross Trade Margin","Net Trade Margin","CM2 Performance","CM3 Performance","Net CM3 (Post-Prov)","Final Net CM3 %"].includes(lbl)) {
-                                                  d.cell.styles.fillColor = [238, 242, 255];
-                                                  d.cell.styles.fontStyle = "bold";
-                                              }
-                                              if (d.section === "body" && d.column.index > 0 && typeof d.cell.raw === "string" && d.cell.raw.includes("(")) {
-                                                  d.cell.styles.textColor = [220, 38, 38];
-                                              }
-                                          },
-                                      });
-
-                                      // Units note above table
-                                      doc.setFontSize(7);
-                                      doc.setFont("helvetica", "italic");
-                                      doc.setTextColor(100, 116, 139);
-                                      doc.text("All figures in INR Lakhs (L). Negatives shown in red parentheses. % values are ratios to GMV.", 20, kpiY + kpiH + 16);
-
-                                      // === FOOTER on every page ===
-                                      const pageCount = doc.internal.getNumberOfPages();
-                                      for (let p = 1; p <= pageCount; p++) {
-                                          doc.setPage(p);
-                                          doc.setDrawColor(226, 232, 240);
-                                          doc.line(30, pageH - 40, pageW - 30, pageH - 40);
-                                          doc.setFontSize(7);
-                                          doc.setTextColor(100, 116, 139);
-                                          doc.setFont("helvetica", "normal");
-                                          doc.text("Ninjacart Pvt. Ltd.  |  No. 75, 3rd Floor, Outer Ring Road, Marathahalli, Bengaluru — 560037", 30, pageH - 26);
-                                          doc.text("finance@ninjacart.com  |  www.ninjacart.com  |  All values in INR Lakhs unless stated otherwise", 30, pageH - 16);
-                                          doc.text(`Page ${p} / ${pageCount}`, pageW - 30, pageH - 16, { align: "right" });
-                                          doc.setFont("helvetica", "italic");
-                                          doc.setFontSize(6.5);
-                                          doc.text("This is a system-generated financial statement. Confidential — for internal use only.", pageW / 2, pageH - 6, { align: "center" });
-                                      }
-
-                                      doc.save(`Ninjacart_PnL_${month}_${year}.pdf`);
+                                      const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+                                      const blob = new Blob([csv], { type: "text/csv" });
+                                      const url = URL.createObjectURL(blob);
+                                      const a = document.createElement("a");
+                                      a.href = url;
+                                      a.download = `Ninjacart_PnL_${month}_${year}.csv`;
+                                      a.click();
+                                      URL.revokeObjectURL(url);
                                   }}
                                   className="p-2.5 bg-white border border-black/5 rounded-xl text-slate-400 hover:text-indigo-600 hover:shadow-sm hover:border-indigo-100 transition-all"
-                                  title="Download PDF Statement"
+                                  title="Download as CSV"
                               >
                                   <Icon name="download" size={16} />
                               </button>
@@ -1679,11 +1423,11 @@
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                          <KPI label="Total Sales (GMV)" val={fmtL(consolidated.gmv)} trend="+5.3%" isPos sub="vs Budget" color="orange" icon="wallet" onClick={() => setSelectedMetric({label: "GMV", field: "gmv"})} />
-                          <KPI label="Gross Margin %" val={fmtPct(consolidated.grossTradeMarginPct)} trend="+0.6%" isPos sub="of Sales" color="emerald" icon="percent" onClick={() => setSelectedMetric({label: "Gross Margin %", field: "grossTradeMarginPct", fmt: fmtPct})} />
-                          <KPI label="CM2 Performance" val={fmtL(consolidated.cm2)} trend="+47.4%" isPos sub="Post Logi/Ops" color="blue" icon="bar-chart" onClick={() => setSelectedMetric({label: "CM2", field: "cm2"})} />
-                          <KPI label="CM3 Performance" val={fmtL(consolidated.cm3)} trend="+86.9%" isPos sub="Post Field" color="indigo" icon="trending-up" onClick={() => setSelectedMetric({label: "CM3", field: "cm3"})} />
-                          <KPI label="Net CM3 (Post-Prov)" val={fmtL(consolidated.netCM3)} trend="+63.4%" isPos sub="Final Bottomline" color="rose" icon="award" onClick={() => setSelectedMetric({label: "Net CM3", field: "netCM3"})} />
+                          <KPI label="Total Sales (GMV)" val={fmtL(consolidated.gmv)} trend="+5.3%" isPos sub="vs Budget" color="orange" onClick={() => setSelectedMetric({label: "GMV", field: "gmv"})} />
+                          <KPI label="Gross Margin %" val={fmtPct(consolidated.grossTradeMarginPct)} trend="+0.6%" isPos sub="of Sales" color="emerald" onClick={() => setSelectedMetric({label: "Gross Margin %", field: "grossTradeMarginPct", fmt: fmtPct})} />
+                          <KPI label="CM2 Performance" val={fmtL(consolidated.cm2)} trend="+47.4%" isPos sub="Post Logi/Ops" color="blue" onClick={() => setSelectedMetric({label: "CM2", field: "cm2"})} />
+                          <KPI label="CM3 Performance" val={fmtL(consolidated.cm3)} trend="+86.9%" isPos sub="Post Field" color="indigo" onClick={() => setSelectedMetric({label: "CM3", field: "cm3"})} />
+                          <KPI label="Net CM3 (Post-Prov)" val={fmtL(consolidated.netCM3)} trend="+63.4%" isPos sub="Final Bottomline" color="rose" onClick={() => setSelectedMetric({label: "Net CM3", field: "netCM3"})} />
                       </div>
 
                       <div className="flex items-center gap-4 bg-slate-50/50 p-2 rounded-[40px] border border-black/5">
@@ -1725,10 +1469,10 @@
                               <div className="overflow-x-auto custom-scrollbar">
                                   <table className="w-full text-left pnl-table border-collapse">
                                       <thead>
-                                          <tr className="border-b-2 border-slate-900/20 bg-slate-900">
-                                              <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest bg-slate-900 sticky left-0 z-10">Metric Item</th>
+                                          <tr className="border-b border-black/5">
+                                              <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 sticky left-0 z-10 backdrop-blur-md">Metric Item</th>
                                               {SUB_BUS.map(bu => (
-                                                  <th key={bu.key} className={`px-6 py-4 text-[11px] font-black uppercase tracking-widest text-center ${bu.key === 'dom_fruits' ? 'text-indigo-200 bg-indigo-900' : 'text-white'}`}>
+                                                  <th key={bu.key} className={`px-6 py-4 text-[9px] font-black uppercase tracking-widest text-center ${bu.key === 'dom_fruits' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400'}`}>
                                                       {bu.short}
                                                   </th>
                                               ))}
@@ -1741,7 +1485,7 @@
                                           <Row label="Gross Trade Margin" field="grossTradeMargin" data={computed} isBold />
                                           <Row label="Gross Trade Margin %" field="grossTradeMarginPct" data={computed} isPct />
                                           <Section label="Contribution Margin 1 Adjustments" />
-                                          <Row label="Other costs (Storage & Logistics)" field="storageLogistics" data={computed} isNegative />
+                                          <Row label="Storage & Logistics" field="storageLogistics" data={computed} isNegative />
                                           <Row label="Working Capital Cost" field="workingCapital" data={computed} isNegative />
                                           <Row label="Capital Credit Cost (1%)" field="capitalCredit" data={computed} isNegative />
                                           <Row label="Margin from Other BUs (+)" field="marginOtherBU" data={computed} />
