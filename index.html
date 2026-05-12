@@ -312,16 +312,14 @@
           const ua = navigator.userAgent || "";
           const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
           const isAndroid = /Android/i.test(ua);
-          const isMobile = isIOS || isAndroid || (/Mobi|Mobile/i.test(ua));
 
           // iOS Safari ignores the `download` attribute on blob URLs.
-          // Use a FileReader -> data URL and navigate, which lets the user save/share the PDF.
+          // Open the PDF immediately in a new tab, then load it with a data URL when ready.
           if (isIOS) {
+              const win = window.open("", "_blank");
               const reader = new FileReader();
               reader.onloadend = () => {
                   const dataUrl = reader.result;
-                  // Try opening in a new tab first (must be sync after user gesture; we already are)
-                  const win = window.open();
                   if (win) {
                       win.document.title = safeName;
                       win.document.body.style.margin = "0";
@@ -344,10 +342,9 @@
           document.body.appendChild(a);
           a.click();
 
-          // Android Chrome sometimes needs a fallback if download didn't trigger
+          // Android Chrome sometimes needs a fallback if download didn't trigger.
           if (isAndroid) {
               setTimeout(() => {
-                  // If the page is still here and nothing happened, open in new tab
                   try { window.open(url, "_blank"); } catch (e) {}
               }, 600);
           }
