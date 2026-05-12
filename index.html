@@ -43,8 +43,8 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
       body { font-family: 'Inter', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; width: 100%; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }
-      .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.05); }
-      .glass-header { background: rgba(248, 250, 252, 0.8); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+      .glass { background: rgba(255, 255, 255, 0.7); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.05); }
+      .glass-header { background: rgba(248, 250, 252, 0.8); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.05); }
       .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 4px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -94,7 +94,176 @@
       }
       .nc-logo-animate { animation: logo-breathe 2s ease-in-out infinite; }
     </style>
-  </head>
+  
+<style>
+	@font-face {
+		font-family: 'CameraPlainVariable';
+		src: url('https://cdn.gpteng.co/mcp-widgets/v1/fonts/CameraPlainVariable.woff2') format('woff2');
+		font-weight: 100 900;
+		font-style: normal;
+		font-display: swap;
+	}
+
+	#lovable-badge {
+		--badge-bg: #1b1b1b;
+		--badge-text: #c5c1b9;
+		--badge-text-hover: #dcdad5;
+		--badge-radius: 6px;
+		--badge-padding: 8px;
+		--badge-gap: 6px;
+		--badge-shadow: 
+			0 0 0 1px rgba(0, 0, 0, 0.88),
+			0 1px 0 0 rgba(0, 0, 0, 0.04),
+			0 2px 2px -1px rgba(0, 0, 0, 0.08),
+			0 4px 4px -2px rgba(0, 0, 0, 0.08),
+			0 8px 8px -4px rgba(0, 0, 0, 0.08),
+			0 16px 16px -8px rgba(0, 0, 0, 0.08);
+		--badge-transition-duration: 0.2s;
+		--badge-transition-easing: cubic-bezier(0.16, 1, 0.32, 1);
+		--focus-color: #575ECF;
+		--focus-offset: 2px;
+		--focus-width: 2px;
+		
+		position: fixed;
+		bottom: 12px;
+		right: 12px;
+		height: 24px;
+		display: flex;
+		align-items: center;
+		z-index: 1000000;
+		background-color: var(--badge-bg);
+		color: var(--badge-text);
+		border-radius: var(--badge-radius);
+		box-shadow: var(--badge-shadow);
+		font-size: 12px;
+		font-family: CameraPlainVariable, "CameraPlainVariable Fallback", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		font-weight: 400 !important;
+		text-transform: none !important;
+		font-feature-settings: normal !important;
+		transform: translateZ(0);
+		will-change: transform, opacity;
+	}
+
+	#lovable-badge-cta {
+		display: flex;
+		align-items: center;
+		gap: var(--badge-gap);
+		padding: 0 var(--badge-padding);
+		height: 100%;
+		color: inherit;
+		text-decoration: none;
+		white-space: nowrap;
+		border-radius: var(--badge-radius) 0 0 var(--badge-radius);
+		transition: 
+			background-color var(--badge-transition-duration) ease,
+			color var(--badge-transition-duration) ease,
+			transform 0.1s ease;
+	}
+
+	#lovable-badge-cta:hover {
+		background: rgba(255, 255, 255, 0.04);
+		color: var(--badge-text-hover);
+	}
+
+	#lovable-badge-cta:active {
+		transform: scale(0.98);
+	}
+
+	#lovable-badge-cta:focus {
+		outline: none;
+	}
+
+	#lovable-badge-cta:focus-visible {
+		outline: var(--focus-width) solid var(--focus-color);
+		outline-offset: var(--focus-offset);
+		z-index: 1;
+	}
+
+	#lovable-badge-text {
+		line-height: 1;
+	}
+
+	#lovable-badge-divider {
+		width: 1px;
+		height: 24px;
+		background-color: rgba(255, 255, 255, 0.04);
+		flex-shrink: 0;
+	}
+
+	#lovable-badge-close {
+		width: 24px;
+		height: 24px;
+		min-width: 24px;
+		min-height: 24px;
+		cursor: pointer;
+		background: none;
+		border: none;
+		padding: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 0 var(--badge-radius) var(--badge-radius) 0;
+		flex-shrink: 0;
+		transition: 
+			background-color var(--badge-transition-duration) ease,
+			transform 0.1s ease;
+	}
+
+	#lovable-badge-close:hover {
+		background: rgba(255, 255, 255, 0.04);
+	}
+
+	#lovable-badge-close:active {
+		transform: scale(0.92);
+	}
+
+	#lovable-badge-close:focus {
+		outline: none;
+	}
+
+	#lovable-badge-close:focus-visible {
+		outline: var(--focus-width) solid var(--focus-color);
+		outline-offset: calc(var(--focus-offset) * -1);
+		z-index: 1;
+	}
+
+	#lovable-badge-close svg path {
+		fill: var(--badge-text);
+		transition: fill var(--badge-transition-duration) ease;
+	}
+
+	#lovable-badge-close:hover svg path {
+		fill: var(--badge-text-hover);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		#lovable-badge-cta,
+		#lovable-badge-close,
+		#lovable-badge-close svg path {
+			transition: none;
+		}
+		
+		#lovable-badge-cta:active,
+		#lovable-badge-close:active {
+			transform: none;
+		}
+	}
+
+	@media (prefers-contrast: high) {
+		#lovable-badge {
+			--badge-bg: #000;
+			--badge-text: #fff;
+			--badge-text-hover: #fff;
+			border: 2px solid currentColor;
+		}
+		
+		#lovable-badge-cta:focus-visible,
+		#lovable-badge-close:focus-visible {
+			outline-width: 3px;
+		}
+	}
+</style>
+<meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f9805ef7-ddbf-48f8-8826-4caf44d607cc/id-preview-2a76909d--83875016-df86-413d-8e1c-fb3e01a5cbca.lovable.app-1778497911322.png"><meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f9805ef7-ddbf-48f8-8826-4caf44d607cc/id-preview-2a76909d--83875016-df86-413d-8e1c-fb3e01a5cbca.lovable.app-1778497911322.png"></head>
   <body class="text-foreground antialiased selection:bg-indigo-500/30">
     <div id="root" class="w-full">
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -145,6 +314,12 @@
       const BarChart = Lib.BarChart || (({children}) => <div>{children}</div>);
       const Bar = Lib.Bar || (() => null);
       const Cell = Lib.Cell || (() => null);
+      const Legend = Lib.Legend || (() => null);
+      const RadarChart = Lib.RadarChart || (({children}) => <div>{children}</div>);
+      const PolarGrid = Lib.PolarGrid || (() => null);
+      const PolarAngleAxis = Lib.PolarAngleAxis || (() => null);
+      const PolarRadiusAxis = Lib.PolarRadiusAxis || (() => null);
+      const Radar = Lib.Radar || (() => null);
       const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRk_7uILshEOrsvZsMZgDEYQLFJXWxXjV0jGJQ2lyXmMdJnyZdiweYwASZHaug7rw00HzvDjRKq3g_N/pub?gid=1929643988&single=true&output=csv";
 
       // Lovable Cloud (Supabase) REST config — used to persist manual entries permanently
@@ -162,6 +337,14 @@
               if (!r.ok) return [];
               return await r.json();
           } catch (e) { console.error("fetchOverrides failed", e); return []; }
+      };
+      const fetchAllOverridesForYear = async (year) => {
+          const url = `${SUPABASE_URL}/rest/v1/manual_overrides?year=eq.${encodeURIComponent(year)}&select=month,bu_key,field,value`;
+          try {
+              const r = await fetch(url, { headers: sbHeaders });
+              if (!r.ok) return [];
+              return await r.json();
+          } catch (e) { console.error("fetchAllOverridesForYear failed", e); return []; }
       };
       const saveOverride = async (year, month, bu_key, field, value) => {
           const url = `${SUPABASE_URL}/rest/v1/manual_overrides?on_conflict=year,month,bu_key,field`;
@@ -739,6 +922,30 @@
 
       const SimpleTrendChart = ({ data, dataKey, color, isPct }) => {
           if (!data || !data.length) return null;
+
+          // Single-month view: render a clean KPI/bar card instead of a lonely dot
+          if (data.length === 1) {
+              const d = data[0];
+              const v = d[dataKey] || 0;
+              const display = isPct ? fmtPct(v) : fmtL(v);
+              return (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-4">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color }}>
+                          {d.label} · Single Period
+                      </span>
+                      <div className="text-5xl md:text-6xl font-black tracking-tighter text-slate-900">
+                          {display}
+                      </div>
+                      <div className="w-full max-w-[260px] h-3 rounded-full bg-slate-100 overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: '100%', background: `linear-gradient(90deg, ${color}, ${color}aa)` }} />
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                          Switch range above to compare months
+                      </p>
+                  </div>
+              );
+          }
+
           const h = 200; const w = 400; const padding = 40;
           const maxVal = Math.max(...data.map(d => d[dataKey])) * 1.2 || 1;
           const points = data.map((d, i) => {
@@ -771,6 +978,61 @@
           );
       };
 
+      const CompareBarChart = ({ data, leftLabel, rightLabel, isPct, unit }) => {
+          if (!data || !data.length) return null;
+          const w = 460, h = 240, padL = 50, padR = 16, padT = 24, padB = 50;
+          const innerW = w - padL - padR;
+          const innerH = h - padT - padB;
+          const groups = data.length;
+          const groupW = innerW / groups;
+          const barW = Math.min(28, (groupW - 16) / 2);
+          const allVals = data.flatMap(d => [d.left || 0, d.right || 0]);
+          const maxV = Math.max(...allVals, 0.1) * 1.15;
+          const minV = Math.min(...allVals, 0);
+          const range = maxV - minV || 1;
+          const yFor = v => padT + innerH - ((v - minV) / range) * innerH;
+          const fmt = v => isPct ? `${v.toFixed(1)}%` : (unit === 'L' ? `₹${v.toFixed(1)}L` : v.toFixed(1));
+          const ticks = 4;
+          return (
+              <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full">
+                  {Array.from({length: ticks+1}).map((_, i) => {
+                      const v = minV + (range * i / ticks);
+                      const y = yFor(v);
+                      return (
+                          <g key={i}>
+                              <line x1={padL} y1={y} x2={w-padR} y2={y} stroke="#f1f5f9" strokeWidth="1" />
+                              <text x={padL-6} y={y+3} textAnchor="end" className="fill-slate-400" style={{fontSize: 9, fontWeight: 700}}>{isPct ? `${v.toFixed(0)}%` : v.toFixed(0)}</text>
+                          </g>
+                      );
+                  })}
+                  {data.map((d, i) => {
+                      const gx = padL + i * groupW + groupW/2;
+                      const lx = gx - barW - 2;
+                      const rx = gx + 2;
+                      const ly = yFor(Math.max(d.left, 0));
+                      const lh = Math.abs(yFor(d.left) - yFor(0));
+                      const ry = yFor(Math.max(d.right, 0));
+                      const rh = Math.abs(yFor(d.right) - yFor(0));
+                      return (
+                          <g key={i}>
+                              <rect x={lx} y={d.left >= 0 ? ly : yFor(0)} width={barW} height={lh} rx="4" fill="#4f46e5" />
+                              <text x={lx + barW/2} y={(d.left >= 0 ? ly : yFor(0)+lh) - 4} textAnchor="middle" className="fill-slate-900" style={{fontSize: 9, fontWeight: 900}}>{fmt(d.left)}</text>
+                              <rect x={rx} y={d.right >= 0 ? ry : yFor(0)} width={barW} height={rh} rx="4" fill="#cbd5e1" />
+                              <text x={rx + barW/2} y={(d.right >= 0 ? ry : yFor(0)+rh) - 4} textAnchor="middle" className="fill-slate-700" style={{fontSize: 9, fontWeight: 900}}>{fmt(d.right)}</text>
+                              <text x={gx} y={h - padB + 16} textAnchor="middle" className="fill-slate-500" style={{fontSize: 10, fontWeight: 800}}>{d.label}</text>
+                          </g>
+                      );
+                  })}
+                  <line x1={padL} y1={yFor(0)} x2={w-padR} y2={yFor(0)} stroke="#e2e8f0" strokeWidth="1.5" />
+                  <g transform={`translate(${padL}, ${h - 14})`}>
+                      <rect x="0" y="-8" width="10" height="10" rx="2" fill="#4f46e5" />
+                      <text x="14" y="1" className="fill-slate-700" style={{fontSize: 10, fontWeight: 800}}>{leftLabel}</text>
+                      <rect x="100" y="-8" width="10" height="10" rx="2" fill="#cbd5e1" />
+                      <text x="114" y="1" className="fill-slate-700" style={{fontSize: 10, fontWeight: 800}}>{rightLabel}</text>
+                  </g>
+              </svg>
+          );
+      };
       const Section = ({ label }) => (
           <tr className="bg-slate-50 border-y border-black/5">
               <td colSpan={SUB_BUS.length + 1} className="px-6 py-2 text-[8px] font-black text-indigo-600/80 uppercase tracking-[0.3em]">
@@ -825,7 +1087,12 @@
 
           const revDelta = dL.gmv - dR.gmv;
           const cm3Delta = dL.netCM3Pct - dR.netCM3Pct;
+          const hasBothData = (dL.gmv > 0) && (dR.gmv > 0);
           const winner = dL.netCM3Pct > dR.netCM3Pct ? buL : buR;
+          const loser  = dL.netCM3Pct > dR.netCM3Pct ? buR : buL;
+          const revLeader = dL.gmv > dR.gmv ? buL : buR;
+          const logisticsDelta = (dL.storageLogistics || 0) - (dR.storageLogistics || 0);
+          const growthIdx = dR.gmv > 0 ? ((dL.gmv / dR.gmv - 1) * 100) : null;
 
           const CompBar = ({ label, valL, valR, fmt }) => {
               const max = Math.max(Math.abs(valL), Math.abs(valR)) || 1;
@@ -882,21 +1149,31 @@
                           <button onClick={onClose} className="p-4 hover:bg-slate-100 rounded-2xl transition-colors"><Icon name="x" size={24} className="text-slate-400" /></button>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                              <div className="space-y-8">
+                      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                              <div className="space-y-5">
                                   <div className="flex items-center gap-3">
                                       <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><Icon name="zap" size={16} /></div>
                                       <h3 className="text-xl font-black text-slate-900 tracking-tight">Comparative Analysis</h3>
                                   </div>
-                                  <p className="text-lg font-medium text-slate-600 leading-relaxed">
-                                      {buL.name} is currently tracking at <span className="text-slate-900 font-black">{fmtL(dL.gmv)}</span> revenue, which is <span className="text-indigo-600 font-black">{fmtL(Math.abs(revDelta))} {revDelta >= 0 ? 'higher' : 'lower'}</span> than {buR.name}.
-                                      In terms of profitability, {winner.name} is the clear leader with a <span className="text-emerald-600 font-black">{fmtPct(Math.max(dL.netCM3Pct, dR.netCM3Pct))}</span> Net CM3 margin.
+                                  <p className="text-base font-medium text-slate-600 leading-relaxed">
+                                      Comparing <span className="text-slate-900 font-black">{buL.name}</span> (GMV <span className="text-indigo-600 font-black">{fmtL(dL.gmv)}</span>, Net&nbsp;CM3 <span className="text-indigo-600 font-black">{fmtPct(dL.netCM3Pct)}</span>) against <span className="text-slate-900 font-black">{buR.name}</span> (GMV <span className="text-slate-900 font-black">{fmtL(dR.gmv)}</span>, Net&nbsp;CM3 <span className="text-slate-900 font-black">{fmtPct(dR.netCM3Pct)}</span>) on revenue scale, profitability margins and the cost lines that erode them.
                                   </p>
+                                  {hasBothData ? (
+                                      <ul className="space-y-3 text-sm font-medium text-slate-700 leading-relaxed list-none pl-0">
+                                          <li className="flex gap-3"><span className="text-indigo-600 font-black">·</span><span><span className="font-black text-slate-900">{revLeader.name}</span> is the larger business at <span className="font-black text-slate-900">{fmtL(Math.max(dL.gmv, dR.gmv))}</span> GMV &mdash; <span className="font-black text-indigo-600">{fmtL(Math.abs(revDelta))}</span> ahead of the other.</span></li>
+                                          <li className="flex gap-3"><span className="text-indigo-600 font-black">·</span><span><span className="font-black text-slate-900">{winner.name}</span> is more profitable at <span className="font-black text-emerald-600">{fmtPct(Math.max(dL.netCM3Pct, dR.netCM3Pct))}</span> Net&nbsp;CM3 vs <span className="font-black text-rose-600">{fmtPct(Math.min(dL.netCM3Pct, dR.netCM3Pct))}</span> &mdash; a <span className="font-black">{Math.abs(cm3Delta).toFixed(1)}pp</span> margin gap.</span></li>
+                                          <li className="flex gap-3"><span className="text-indigo-600 font-black">·</span><span>Read the bars below: <span className="text-indigo-600 font-black">indigo</span> = {buL.short}, <span className="text-slate-500 font-black">grey</span> = {buR.short}. Longer bar = higher value.</span></li>
+                                      </ul>
+                                  ) : (
+                                      <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl text-sm font-medium text-amber-900">
+                                          One of the selected BUs has no data for this period, so the comparison cannot be computed meaningfully. Please pick two BUs that both have figures entered.
+                                      </div>
+                                  )}
                                   <div className="space-y-6 bg-slate-50 p-8 rounded-[32px] border border-black/5">
-                                      <CompBar label="Revenue Flow" valL={dL.gmv} valR={dR.gmv} fmt={fmtL} />
-                                      <CompBar label="Net Margin %" valL={dL.netCM3Pct} valR={dR.netCM3Pct} fmt={fmtPct} />
-                                      <CompBar label="CM2 Performance" valL={dL.cm2} valR={dR.cm2} fmt={fmtL} />
+                                      <CompBar label="Revenue Flow (GMV)" valL={dL.gmv} valR={dR.gmv} fmt={fmtL} />
+                                      <CompBar label="Net CM3 Margin %" valL={dL.netCM3Pct} valR={dR.netCM3Pct} fmt={fmtPct} />
+                                      <CompBar label="CM2 Contribution" valL={dL.cm2} valR={dR.cm2} fmt={fmtL} />
                                   </div>
                               </div>
 
@@ -905,20 +1182,87 @@
                                       <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12">
                                           <img src="https://ninjacart.com/wp-content/uploads/2023/10/cropped-Group-207-1.png" alt="" className="w-32 h-auto object-contain brightness-0 invert" />
                                       </div>
-                                      <p className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-2">Performance Leader</p>
-                                      <h4 className="text-3xl font-black tracking-tighter mb-4">{winner.name}</h4>
-                                      <p className="text-xs font-medium text-white/80 leading-relaxed">Demonstrates superior operational efficiency with a {fmtPct(Math.abs(cm3Delta))} margin delta over the benchmark.</p>
+                                      <p className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-2">Most Profitable BU</p>
+                                      <h4 className="text-3xl font-black tracking-tighter mb-3">{winner.name}</h4>
+                                      <p className="text-xs font-medium text-white/80 leading-relaxed">
+                                          {hasBothData
+                                              ? <>Earns <span className="font-black text-white">{fmtPct(Math.abs(cm3Delta))}</span> more Net&nbsp;CM3 margin per ₹ of GMV than {loser.name}. On every ₹100 of revenue, it keeps ₹{(Math.abs(cm3Delta)).toFixed(1)} more as bottom-line profit.</>
+                                              : <>Margin comparison unavailable &mdash; one BU is missing data.</>}
+                                      </p>
                                   </div>
                                   <div className="grid grid-cols-2 gap-4">
                                       <div className="p-6 bg-slate-50 border border-black/5 rounded-3xl">
-                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Logistics Variance</p>
-                                          <p className="text-xl font-black text-rose-600">{fmtL(dL.storageLogistics - dR.storageLogistics)}</p>
-                                          <p className="text-[9px] font-bold text-slate-500 mt-2">Gap in supply chain cost</p>
+                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Logistics Cost Gap</p>
+                                          <p className={`text-xl font-black ${logisticsDelta > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>{logisticsDelta >= 0 ? '+' : ''}{fmtL(logisticsDelta)}</p>
+                                          <p className="text-[9px] font-bold text-slate-500 mt-2">{buL.short} spends {logisticsDelta >= 0 ? 'more' : 'less'} on Storage &amp; Logistics than {buR.short}</p>
                                       </div>
                                       <div className="p-6 bg-slate-50 border border-black/5 rounded-3xl">
-                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Growth Index</p>
-                                          <p className="text-xl font-black text-indigo-600">+{((dL.gmv / dR.gmv - 1) * 100).toFixed(1)}%</p>
-                                          <p className="text-[9px] font-bold text-slate-500 mt-2">Relative scale vs benchmark</p>
+                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Revenue Scale</p>
+                                          <p className="text-xl font-black text-indigo-600">{growthIdx === null ? 'N/A' : (growthIdx >= 0 ? '+' : '') + growthIdx.toFixed(1) + '%'}</p>
+                                          <p className="text-[9px] font-bold text-slate-500 mt-2">{growthIdx === null ? 'Benchmark BU has no GMV' : `${buL.short} GMV vs ${buR.short} GMV`}</p>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+
+                          <div className="h-px bg-slate-100"></div>
+
+                          <div className="space-y-4">
+                              <div>
+                                  <h3 className="text-base font-black text-slate-900 tracking-tight">Visual Comparison</h3>
+                                  <p className="text-[10px] font-medium text-slate-500">Side-by-side view of key financial metrics</p>
+                              </div>
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                                  <div className="bg-white border border-black/5 rounded-2xl p-3 shadow-sm">
+                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Absolute Values (₹L)</p>
+                                      <p className="text-[10px] font-bold text-slate-600 mb-2">GMV · CM2 · CM3 · Net CM3</p>
+                                      <div style={{width:'100%', height: 180}}>
+                                          <CompareBarChart
+                                              leftLabel={buL.short}
+                                              rightLabel={buR.short}
+                                              unit="L"
+                                              data={[
+                                                  { label: 'GMV', left: +(dL.gmv/100000).toFixed(2), right: +(dR.gmv/100000).toFixed(2) },
+                                                  { label: 'CM2', left: +(dL.cm2/100000).toFixed(2), right: +(dR.cm2/100000).toFixed(2) },
+                                                  { label: 'CM3', left: +(dL.cm3/100000).toFixed(2), right: +(dR.cm3/100000).toFixed(2) },
+                                                  { label: 'Net CM3', left: +(dL.netCM3/100000).toFixed(2), right: +(dR.netCM3/100000).toFixed(2) },
+                                              ]}
+                                          />
+                                      </div>
+                                  </div>
+                                  <div className="bg-white border border-black/5 rounded-2xl p-3 shadow-sm">
+                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Margin Profile (%)</p>
+                                      <p className="text-[10px] font-bold text-slate-600 mb-2">Profitability ratios head-to-head</p>
+                                      <div style={{width:'100%', height: 180}}>
+                                          <CompareBarChart
+                                              leftLabel={buL.short}
+                                              rightLabel={buR.short}
+                                              isPct
+                                              data={[
+                                                  { label: 'Gross %', left: +dL.grossTradeMarginPct.toFixed(2), right: +dR.grossTradeMarginPct.toFixed(2) },
+                                                  { label: 'Net Trade %', left: +(dL.gmv ? (dL.netTradeMargin/dL.gmv)*100 : 0).toFixed(2), right: +(dR.gmv ? (dR.netTradeMargin/dR.gmv)*100 : 0).toFixed(2) },
+                                                  { label: 'CM2 %', left: +(dL.gmv ? (dL.cm2/dL.gmv)*100 : 0).toFixed(2), right: +(dR.gmv ? (dR.cm2/dR.gmv)*100 : 0).toFixed(2) },
+                                                  { label: 'Net CM3 %', left: +dL.netCM3Pct.toFixed(2), right: +dR.netCM3Pct.toFixed(2) },
+                                              ]}
+                                          />
+                                      </div>
+                                  </div>
+                                  <div className="bg-white border border-black/5 rounded-2xl p-3 shadow-sm">
+                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cost Structure (₹L)</p>
+                                      <p className="text-[10px] font-bold text-slate-600 mb-2">Lower is better</p>
+                                      <div style={{width:'100%', height: 180}}>
+                                          <CompareBarChart
+                                              leftLabel={buL.short}
+                                              rightLabel={buR.short}
+                                              unit="L"
+                                              data={[
+                                                  { label: 'Storage&Log', left: +((dL.storageLogistics||0)/100000).toFixed(2), right: +((dR.storageLogistics||0)/100000).toFixed(2) },
+                                                  { label: 'Wkg Cap', left: +((dL.workingCapital||0)/100000).toFixed(2), right: +((dR.workingCapital||0)/100000).toFixed(2) },
+                                                  { label: 'CM2 Costs', left: +((dL.cm2Costs||0)/100000).toFixed(2), right: +((dR.cm2Costs||0)/100000).toFixed(2) },
+                                                  { label: 'Manpower', left: +((dL.manpower||0)/100000).toFixed(2), right: +((dR.manpower||0)/100000).toFixed(2) },
+                                                  { label: 'Bad Debts', left: +((dL.badDebts||0)/100000).toFixed(2), right: +((dR.badDebts||0)/100000).toFixed(2) },
+                                              ]}
+                                          />
                                       </div>
                                   </div>
                               </div>
@@ -1001,38 +1345,99 @@
                                   </div>
                               </div>
                               <div className="bg-slate-50 p-6 rounded-[32px] border border-black/5 h-[300px]">
-                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Revenue Trend (6M)</p>
-                                  <SimpleTrendChart data={trendData} dataKey="margin" color="#f97316" />
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">GMV Trend ({trendData.length}M)</p>
+                                  <SimpleTrendChart data={trendData} dataKey="gmv" color="#f97316" />
                               </div>
                           </div>
 
                           <div className="h-px bg-slate-100"></div>
 
-                          {/* Section 2: Operational Efficiency (CM2) */}
+                          {/* Section 2: CM1 — Trade Margin Adjustments */}
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                               <div className="order-2 lg:order-1 bg-slate-50 p-6 rounded-[32px] border border-black/5 h-[300px]">
-                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">CM2 Cost Efficiency</p>
-                                  <SimpleTrendChart data={trendData} dataKey="margin" color="#4f46e5" isPct />
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Gross Margin % Trend</p>
+                                  <SimpleTrendChart data={trendData} dataKey="marginPct" color="#4f46e5" isPct />
                               </div>
                               <div className="order-1 lg:order-2 space-y-6">
                                   <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><Icon name="zap" size={16} /></div>
-                                      <h3 className="text-xl font-black text-slate-900 tracking-tight">CM2 Operational Efficiency</h3>
+                                      <div className="w-8 h-8 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center"><Icon name="zap" size={16} /></div>
+                                      <h3 className="text-xl font-black text-slate-900 tracking-tight">CM1 — Trade Margin Adjustments</h3>
                                   </div>
                                   <p className="text-lg font-medium text-slate-600 leading-relaxed">
-                                      Other costs (Storage & Logistics) are consuming <span className="text-slate-900 font-black">{fmtL(data.storageLogistics)}</span>.
-                                      Working capital utilization remains optimized with a total cost of <span className="text-rose-600 font-black">{fmtL(data.workingCapital)}</span>.
+                                      After Gross Trade Margin of <span className="text-slate-900 font-black">{fmtL(data.grossTradeMargin)}</span>, CM1 absorbs Storage &amp; Logistics <span className="text-rose-600 font-black">{fmtL(data.storageLogistics)}</span>, Working Capital <span className="text-rose-600 font-black">{fmtL(data.workingCapital)}</span>, Capital Credit <span className="text-rose-600 font-black">{fmtL(data.capitalCredit)}</span> and adds Margin from Other BUs <span className="text-emerald-600 font-black">{fmtL(data.marginOtherBU)}</span>.
                                   </p>
                                   <div className="grid grid-cols-2 gap-4">
                                       <div className="p-5 bg-white border border-black/5 rounded-2xl shadow-sm">
-                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Net Trade Margin</p>
+                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Net Trade Margin (CM1)</p>
                                           <p className="text-2xl font-black text-slate-900">{fmtL(data.netTradeMargin)}</p>
-                                          <p className="text-[10px] font-bold text-indigo-600 mt-2">{fmtPct(data.netTradeMarginPct)} Efficiency</p>
+                                          <p className="text-[10px] font-bold text-indigo-600 mt-2">{fmtPct(data.netTradeMarginPct)} of GMV</p>
                                       </div>
                                       <div className="p-5 bg-white border border-black/5 rounded-2xl shadow-sm">
                                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Logistics Drag</p>
-                                          <p className="text-2xl font-black text-rose-600">{((data.storageLogistics / data.gmv) * 100).toFixed(1)}%</p>
+                                          <p className="text-2xl font-black text-rose-600">{data.gmv ? ((data.storageLogistics / data.gmv) * 100).toFixed(2) : "0.00"}%</p>
                                           <p className="text-[10px] font-bold text-slate-400 mt-2">of total GMV</p>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+
+                          <div className="h-px bg-slate-100"></div>
+
+                          {/* Section 2b: CM2 — Operational Costs */}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                              <div className="space-y-6">
+                                  <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><Icon name="bar-chart" size={16} /></div>
+                                      <h3 className="text-xl font-black text-slate-900 tracking-tight">CM2 — Operational Costs</h3>
+                                  </div>
+                                  <p className="text-lg font-medium text-slate-600 leading-relaxed">
+                                      From Net Trade Margin of <span className="text-slate-900 font-black">{fmtL(data.netTradeMargin)}</span>, CM2 Costs of <span className="text-rose-600 font-black">{fmtL(data.cm2Costs)}</span> are deducted, landing CM2 at <span className="text-slate-900 font-black">{fmtL(data.cm2)}</span>.
+                                  </p>
+                                  <div className="grid grid-cols-2 gap-4">
+                                      <div className="p-5 bg-white border border-black/5 rounded-2xl shadow-sm">
+                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">CM2 Performance</p>
+                                          <p className="text-2xl font-black text-slate-900">{fmtL(data.cm2)}</p>
+                                          <p className="text-[10px] font-bold text-indigo-600 mt-2">{data.gmv ? fmtPct((data.cm2 / data.gmv) * 100) : "0.0%"} of GMV</p>
+                                      </div>
+                                      <div className="p-5 bg-white border border-black/5 rounded-2xl shadow-sm">
+                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">CM2 Cost Burden</p>
+                                          <p className="text-2xl font-black text-rose-600">{data.gmv ? ((data.cm2Costs / data.gmv) * 100).toFixed(2) : "0.00"}%</p>
+                                          <p className="text-[10px] font-bold text-slate-400 mt-2">of total GMV</p>
+                                      </div>
+                                  </div>
+                              </div>
+                              <div className="bg-slate-50 p-6 rounded-[32px] border border-black/5 h-[300px]">
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">CM2 Trend</p>
+                                  <SimpleTrendChart data={trendData} dataKey="cm2" color="#3b82f6" />
+                              </div>
+                          </div>
+
+                          <div className="h-px bg-slate-100"></div>
+
+                          {/* Section 2c: CM3 — Field Costs & Provisions */}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                              <div className="order-2 lg:order-1 bg-slate-50 p-6 rounded-[32px] border border-black/5 h-[300px]">
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Net CM3 Trend</p>
+                                  <SimpleTrendChart data={trendData} dataKey="netCm3" color="#e11d48" />
+                              </div>
+                              <div className="order-1 lg:order-2 space-y-6">
+                                  <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center"><Icon name="trending" size={16} /></div>
+                                      <h3 className="text-xl font-black text-slate-900 tracking-tight">CM3 — Field Costs &amp; Provisions</h3>
+                                  </div>
+                                  <p className="text-lg font-medium text-slate-600 leading-relaxed">
+                                      CM3 deducts Manpower <span className="text-rose-600 font-black">{fmtL(data.manpower)}</span>, Travel <span className="text-rose-600 font-black">{fmtL(data.travel)}</span> and Other <span className="text-rose-600 font-black">{fmtL(data.other)}</span> from CM2, yielding <span className="text-slate-900 font-black">{fmtL(data.cm3)}</span>. After Bad Debts <span className="text-rose-600 font-black">{fmtL(data.badDebts)}</span> and Provision Reversal <span className="text-emerald-600 font-black">{fmtL(data.provReversal)}</span>, Net CM3 is <span className="text-slate-900 font-black">{fmtL(data.netCM3)}</span>.
+                                  </p>
+                                  <div className="grid grid-cols-2 gap-4">
+                                      <div className="p-5 bg-white border border-black/5 rounded-2xl shadow-sm">
+                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">CM3</p>
+                                          <p className="text-2xl font-black text-slate-900">{fmtL(data.cm3)}</p>
+                                          <p className="text-[10px] font-bold text-indigo-600 mt-2">{fmtPct(data.cm3Pct)} of GMV</p>
+                                      </div>
+                                      <div className="p-5 bg-white border border-black/5 rounded-2xl shadow-sm">
+                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Net CM3 (Post-Prov)</p>
+                                          <p className={`text-2xl font-black ${data.netCM3 >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{fmtL(data.netCM3)}</p>
+                                          <p className="text-[10px] font-bold text-slate-400 mt-2">{fmtPct(data.netCM3Pct)} of GMV</p>
                                       </div>
                                   </div>
                               </div>
@@ -1044,19 +1449,21 @@
                           <div className="space-y-8">
                               <div className="text-center space-y-2">
                                   <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Profitability Bridge (A-Z)</h3>
-                                  <p className="text-sm text-slate-500 font-medium italic">Path from Gross Revenue to Final Net Profitability</p>
+                                  <p className="text-sm text-slate-500 font-medium italic">Gross Margin → CM1 → CM2 → CM3 → Net CM3</p>
                               </div>
-                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                                   {[
                                       { label: "GMV", val: data.gmv, color: "slate" },
                                       { label: "Gross Margin", val: data.grossTradeMargin, color: "emerald" },
+                                      { label: "CM1 (Net Trade Margin)", val: data.netTradeMargin, color: "sky" },
                                       { label: "CM2", val: data.cm2, color: "blue" },
-                                      { label: "Net CM3", val: data.netCM3, color: "indigo" }
+                                      { label: "CM3", val: data.cm3, color: "indigo" },
+                                      { label: "Net CM3", val: data.netCM3, color: "rose" }
                                   ].map((item, i) => (
                                       <div key={i} className="relative p-6 bg-slate-50 rounded-3xl border border-black/5 text-center group hover:bg-indigo-600 transition-all duration-500">
                                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-white/70">{item.label}</p>
                                           <p className="text-2xl font-black text-slate-900 group-hover:text-white">{fmtL(item.val)}</p>
-                                          {i < 3 && <div className="hidden md:block absolute top-1/2 -right-4 -translate-y-1/2 z-20 text-slate-300 group-hover:text-white"><Icon name="chevron" size={24} className="-rotate-90" /></div>}
+                                          {i < 5 && <div className="hidden md:block absolute top-1/2 -right-4 -translate-y-1/2 z-20 text-slate-300 group-hover:text-white"><Icon name="chevron" size={24} className="-rotate-90" /></div>}
                                       </div>
                                   ))}
                               </div>
@@ -1139,6 +1546,10 @@
           const [showSummary, setShowSummary] = useState(false);
           const [chart1Metric, setChart1Metric] = useState("Gross Margin %");
           const [chart2Metric, setChart2Metric] = useState("CM3");
+          const [chartRange, setChartRange] = useState("6M"); // 1M (selected only), 3M, 6M, 12M, CUSTOM
+          const [customRange, setCustomRange] = useState({ startMonth: "Nov", startYear: "2025", endMonth: "Apr", endYear: "2026" });
+          const [showRangePicker, setShowRangePicker] = useState(false);
+          const [allOverrides, setAllOverrides] = useState({}); // { month: { bu_key: { field: value } } }
 
           const METRIC_CHART_MAP = {
               "GMV": { key: "gmv", isPct: false, color: "#f97316", desc: "Total gross merchandise value (Lakhs)" },
@@ -1260,6 +1671,23 @@
               return () => { cancelled = true; };
           }, [year, month]);
 
+          // Load ALL overrides for the year (used to power multi-month trend charts with real DB values)
+          useEffect(() => {
+              let cancelled = false;
+              (async () => {
+                  const rows = await fetchAllOverridesForYear(year);
+                  if (cancelled) return;
+                  const grouped = {};
+                  rows.forEach(r => {
+                      grouped[r.month] = grouped[r.month] || {};
+                      grouped[r.month][r.bu_key] = grouped[r.month][r.bu_key] || {};
+                      grouped[r.month][r.bu_key][r.field] = Number(r.value);
+                  });
+                  setAllOverrides(grouped);
+              })();
+              return () => { cancelled = true; };
+          }, [year, month]);
+
           const updateInput = (buKey, field, val) => {
               setInputs(prev => ({
                   ...prev,
@@ -1358,41 +1786,88 @@
           const trendData = useMemo(() => {
               if (!rawSheetData.length) return [];
               const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-              const targetYear = year;
+              const monthMap = { "Jan": "Jan", "Feb": "Feb", "Mar": "March", "Apr": "April", "May": "May", "Jun": "June", "Jul": "July", "Aug": "August", "Sep": "September", "Oct": "October", "Nov": "November", "Dec": "December" };
+              const subBuKeys = SUB_BUS.filter(b => b.key !== "dom_fruits").map(b => b.key);
+              const fields = ['gmv', 'margin', 'dncn', 'grossTradeMargin', 'storageLogistics', 'workingCapital', 'capitalCredit', 'marginOtherBU', 'cm2Costs', 'manpower', 'travel', 'other', 'badDebts', 'provReversal'];
               const currentIdx = months.indexOf(month);
+              const rangeMap = { "1M": 1, "3M": 3, "6M": 6, "12M": 12 };
+              // Build list of {mIdx, y} entries to iterate
+              const entries = [];
+              if (chartRange === "CUSTOM") {
+                  const sIdx = months.indexOf(customRange.startMonth);
+                  const eIdx = months.indexOf(customRange.endMonth);
+                  const sY = parseInt(customRange.startYear);
+                  const eY = parseInt(customRange.endYear);
+                  let cy = sY, ci = sIdx;
+                  // Safety cap to avoid infinite loops
+                  for (let guard = 0; guard < 60; guard++) {
+                      entries.push({ mIdx: ci, y: cy });
+                      if (ci === eIdx && cy === eY) break;
+                      ci++;
+                      if (ci > 11) { ci = 0; cy++; }
+                      if (cy > eY + 1) break;
+                  }
+              } else {
+                  const span = rangeMap[chartRange] || 1;
+                  for (let i = span - 1; i >= 0; i--) {
+                      let mIdx = currentIdx - i;
+                      let y = parseInt(year);
+                      if (mIdx < 0) { mIdx += 12; y -= 1; }
+                      entries.push({ mIdx, y });
+                  }
+              }
               const results = [];
 
-              for(let i = 5; i >= 0; i--) {
-                  let mIdx = currentIdx - i;
-                  let y = parseInt(targetYear);
-                  if (mIdx < 0) { mIdx += 12; y -= 1; }
+              for (const { mIdx, y } of entries) {
                   const mName = months[mIdx];
-                  const monthMap = { "Jan": "Jan", "Feb": "Feb", "Mar": "March", "Apr": "April", "May": "May", "Jun": "June", "Jul": "July", "Aug": "August", "Sep": "September", "Oct": "October", "Nov": "November", "Dec": "December" };
                   const mFull = (monthMap[mName] || mName).toLowerCase();
 
-                  let tGmv = 0; let tMargin = 0; let tCm3 = 0;
+                  // 1) Aggregate raw sheet GMV/margin per sub-BU for this month
+                  const buckets = {};
+                  subBuKeys.forEach(k => buckets[k] = { gmv: 0, margin: 0 });
                   rawSheetData.forEach(row => {
                       const rY = String(row['Year'] || "").trim();
                       const rM = (row['Closure'] || "").trim().toLowerCase();
                       if (rY === String(y) && (rM === mFull || rM.includes(mFull))) {
-                          tGmv += (parseFloat(row['Sales (GMV)']) || 0) / 100000;
-                          tMargin += (parseFloat(row['Margin']) || 0) / 100000;
+                          const key = mapRowToBU(row);
+                          if (key && key !== "dom_fruits" && buckets[key]) {
+                              const salesReceivable = parseFloat(row['Sales Receivable']) || 0;
+                              buckets[key].gmv += (parseFloat(row['Sales (GMV)']) || 0) / 100000;
+                              if (salesReceivable <= 0) buckets[key].margin += (parseFloat(row['Margin']) || 0) / 100000;
+                          }
                       }
                   });
 
+                  // 2) Merge per-sub-BU DB overrides into the buckets
+                  const monthOverrides = (allOverrides[mName] || {});
+                  const mergedSub = {};
+                  subBuKeys.forEach(k => {
+                      mergedSub[k] = { ...buckets[k], ...(monthOverrides[k] || {}) };
+                  });
+
+                  // 3) Build dom_fruits aggregate exactly like the main dashboard does:
+                  //    sum of sub-BU fields, then overlay any dom_fruits-level override (dncn, costs, etc.)
+                  const aggOverrides = monthOverrides['dom_fruits'] || {};
+                  const aggregateInput = {};
+                  fields.forEach(f => {
+                      const summed = subBuKeys.reduce((sum, k) => sum + (Number(mergedSub[k][f]) || 0), 0);
+                      aggregateInput[f] = aggOverrides[f] !== undefined ? Number(aggOverrides[f]) : summed;
+                  });
+                  const total = compute(aggregateInput);
+
                   results.push({
                       label: `${mName}`,
-                      gmv: tGmv,
-                      margin: tMargin,
-                      marginPct: tGmv ? (tMargin / tGmv) * 100 : 0,
-                      cm1: tMargin * 0.85,
-                      cm2: tMargin * 0.70,
-                      cm3: tMargin * 0.45,
-                      netCm3: tMargin * 0.40
+                      gmv: total.gmv,
+                      margin: total.grossTradeMargin,
+                      marginPct: total.grossTradeMarginPct,
+                      cm1: total.netTradeMargin,
+                      cm2: total.cm2,
+                      cm3: total.cm3,
+                      netCm3: total.netCM3
                   });
               }
               return results;
-          }, [rawSheetData, month, year]);
+          }, [rawSheetData, month, year, chartRange, allOverrides, customRange]);
 
           // updateInput was moved up
           const consolidated = useMemo(() => {
@@ -1775,6 +2250,76 @@
                                   </table>
                               </div>
                           </div>
+                          <div className="flex items-center justify-between mb-2 relative">
+                              <div>
+                                  <h2 className="text-xl font-black text-slate-900 tracking-tighter">Trend Charts</h2>
+                                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                                      {chartRange === "1M"
+                                          ? `Showing only ${month} ${year}`
+                                          : chartRange === "CUSTOM"
+                                              ? `Showing ${customRange.startMonth} ${customRange.startYear} → ${customRange.endMonth} ${customRange.endYear}`
+                                              : `Showing last ${chartRange} ending ${month} ${year}`}
+                                  </p>
+                              </div>
+                              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl relative">
+                                  {["RANGE", "1M", "3M", "6M", "12M"].map(r => {
+                                      const isCustom = r === "RANGE";
+                                      const active = isCustom ? chartRange === "CUSTOM" : chartRange === r;
+                                      return (
+                                          <button
+                                              key={r}
+                                              onClick={() => {
+                                                  if (isCustom) {
+                                                      setShowRangePicker(v => !v);
+                                                      if (chartRange !== "CUSTOM") setChartRange("CUSTOM");
+                                                  } else {
+                                                      setShowRangePicker(false);
+                                                      setChartRange(r);
+                                                  }
+                                              }}
+                                              className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
+                                                  active ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                                              }`}
+                                          >
+                                              {isCustom ? (chartRange === "CUSTOM" ? "Range ▾" : "Select Range") : (r === "1M" ? "Selected" : r)}
+                                          </button>
+                                      );
+                                  })}
+                                  {showRangePicker && (
+                                      <div className="absolute right-0 top-full mt-2 z-50 bg-white border border-black/5 shadow-premium rounded-2xl p-4 w-[320px]">
+                                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Custom Month Range</p>
+                                          <div className="grid grid-cols-2 gap-3">
+                                              <div>
+                                                  <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400">From</label>
+                                                  <div className="flex gap-1 mt-1">
+                                                      <select value={customRange.startMonth} onChange={e => setCustomRange(c => ({...c, startMonth: e.target.value}))} className="flex-1 text-xs font-bold rounded-lg border border-slate-200 px-2 py-1.5 bg-slate-50">
+                                                          {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m => <option key={m} value={m}>{m}</option>)}
+                                                      </select>
+                                                      <select value={customRange.startYear} onChange={e => setCustomRange(c => ({...c, startYear: e.target.value}))} className="w-20 text-xs font-bold rounded-lg border border-slate-200 px-2 py-1.5 bg-slate-50">
+                                                          {["2024","2025","2026","2027"].map(y => <option key={y} value={y}>{y}</option>)}
+                                                      </select>
+                                                  </div>
+                                              </div>
+                                              <div>
+                                                  <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400">To</label>
+                                                  <div className="flex gap-1 mt-1">
+                                                      <select value={customRange.endMonth} onChange={e => setCustomRange(c => ({...c, endMonth: e.target.value}))} className="flex-1 text-xs font-bold rounded-lg border border-slate-200 px-2 py-1.5 bg-slate-50">
+                                                          {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m => <option key={m} value={m}>{m}</option>)}
+                                                      </select>
+                                                      <select value={customRange.endYear} onChange={e => setCustomRange(c => ({...c, endYear: e.target.value}))} className="w-20 text-xs font-bold rounded-lg border border-slate-200 px-2 py-1.5 bg-slate-50">
+                                                          {["2024","2025","2026","2027"].map(y => <option key={y} value={y}>{y}</option>)}
+                                                      </select>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                          <div className="flex justify-end gap-2 mt-4">
+                                              <button onClick={() => setShowRangePicker(false)} className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg text-slate-500 hover:bg-slate-100">Close</button>
+                                              <button onClick={() => { setChartRange("CUSTOM"); setShowRangePicker(false); }} className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg bg-indigo-600 text-white shadow-sm hover:bg-indigo-700">Apply</button>
+                                          </div>
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                               <div className="glass p-8 rounded-[32px] border border-black/5 shadow-premium bg-white">
                                   <div className="mb-8 flex justify-between items-start">
@@ -1820,5 +2365,76 @@
       const root = window.ReactDOM.createRoot(document.getElementById('root'));
       root.render(<Dashboard />);
     </script>
-  </body>
+  <script src="https://cdn.gpteng.co/lovable.js" type="module"></script>
+<aside 
+	id="lovable-badge" 
+	role="complementary"
+	dir="ltr"
+	lang="en"
+	aria-label="Edit with Lovable">
+	<a 
+		id="lovable-badge-cta" 
+		target="_blank" 
+		href="https://lovable.dev/projects/83875016-df86-413d-8e1c-fb3e01a5cbca?utm_source=lovable-badge"
+		rel="noopener nofollow"
+		aria-label="Edit with Lovable">
+		<span id="lovable-badge-text">Edit with</span>
+		<svg xmlns="http://www.w3.org/2000/svg" width="52" height="16" fill="none" viewBox="0 0 52 16">
+  <path fill="#FCFBF8" fill-rule="evenodd" d="M20.318 5.25c.643 0 1.206.14 1.69.418a2.81 2.81 0 0 1 1.118 1.191c.266.513.4 1.115.4 1.807s-.134 1.296-.4 1.812a2.81 2.81 0 0 1-1.118 1.193c-.484.278-1.047.418-1.69.418s-1.208-.14-1.695-.418a2.85 2.85 0 0 1-1.125-1.193c-.262-.516-.393-1.12-.393-1.812s.131-1.294.393-1.807a2.848 2.848 0 0 1 1.125-1.191c.487-.279 1.052-.418 1.695-.418Zm0 1.425c-.27 0-.504.076-.7.228-.193.147-.34.37-.443.67-.102.295-.153.66-.153 1.093 0 .435.05.801.153 1.1.102.3.25.524.443.676.196.147.43.22.7.22.27 0 .502-.073.694-.22.193-.152.341-.375.443-.67.103-.299.153-.667.153-1.106 0-.65-.112-1.145-.337-1.481a1.08 1.08 0 0 0-.953-.51ZM32.7 5.25c.61 0 1.127.1 1.549.3.422.197.74.48.953.849.217.368.325.809.325 1.32v2.704c0 .29.02.562.062.812.044.245.108.4.19.466V12h-1.935a5.895 5.895 0 0 1-.105-.684 7.745 7.745 0 0 1-.02-.228 2.293 2.293 0 0 1-.151.203c-.205.242-.47.437-.793.584-.32.143-.685.215-1.094.215-.406 0-.77-.08-1.094-.24a1.845 1.845 0 0 1-.756-.682 1.984 1.984 0 0 1-.27-1.045c0-.606.178-1.069.535-1.388.356-.324.87-.534 1.542-.633l1.125-.16c.225-.032.403-.074.534-.123a.622.622 0 0 0 .288-.196.549.549 0 0 0 .093-.327.65.65 0 0 0-.11-.367.702.702 0 0 0-.32-.27c-.14-.07-.31-.105-.51-.105-.32 0-.576.083-.768.251-.193.164-.298.39-.314.676h-1.923c.016-.434.147-.82.393-1.155.25-.34.596-.604 1.039-.792.442-.189.954-.283 1.535-.283Zm.99 3.498a.98.98 0 0 1-.215.14 2.49 2.49 0 0 1-.584.178l-.473.092c-.315.061-.553.156-.713.283-.155.127-.233.305-.233.534 0 .23.084.412.252.547.168.135.383.203.645.203s.494-.058.694-.173c.201-.118.355-.282.461-.49.11-.21.166-.448.166-.714v-.6Zm4.526-2.375c.065-.125.138-.243.221-.349.197-.25.437-.44.719-.571.282-.135.6-.203.952-.203.528 0 .988.138 1.377.412.389.275.688.67.896 1.186.21.512.314 1.12.314 1.824 0 .7-.107 1.309-.32 1.825-.213.512-.518.906-.915 1.18-.393.275-.854.412-1.383.412-.352 0-.667-.062-.946-.184a1.832 1.832 0 0 1-.7-.554 2.2 2.2 0 0 1-.234-.383V12h-1.843V3h1.862v3.373Zm1.284.296c-.274 0-.51.085-.707.253-.192.163-.338.397-.436.7a3.376 3.376 0 0 0-.148 1.05c0 .406.05.759.148 1.058.098.299.243.53.436.694.197.164.433.246.707.246.279 0 .512-.082.7-.246.193-.164.336-.395.43-.694.099-.3.148-.652.148-1.058 0-.405-.05-.757-.147-1.056-.095-.299-.238-.53-.43-.694a1.015 1.015 0 0 0-.7-.253Zm9.416-1.419c.602 0 1.136.131 1.604.393.466.262.829.643 1.086 1.143.263.5.394 1.097.394 1.794 0 .25-.002.449-.006.596H47.51c.018.288.071.538.164.75a1.3 1.3 0 0 0 .491.596c.214.13.465.196.757.196.319 0 .583-.082.792-.246.209-.167.34-.403.393-.706h1.862a2.48 2.48 0 0 1-.485 1.235 2.54 2.54 0 0 1-1.051.805c-.439.188-.949.283-1.53.283-.655 0-1.225-.125-1.708-.375a2.672 2.672 0 0 1-1.13-1.143c-.267-.508-.4-1.137-.4-1.887 0-.712.14-1.327.418-1.843a2.86 2.86 0 0 1 1.155-1.186c.491-.27 1.051-.405 1.678-.405Zm-.044 1.345c-.274 0-.516.068-.725.203a1.29 1.29 0 0 0-.479.59 2.045 2.045 0 0 0-.132.498h2.562a1.873 1.873 0 0 0-.138-.602 1.061 1.061 0 0 0-.418-.516 1.243 1.243 0 0 0-.67-.173Z" clip-rule="evenodd"/>
+  <path fill="#FCFBF8" d="m26.605 9.995 1.342-4.566h1.924L27.628 12h-2.07l-2.33-6.57h1.98l1.397 4.565Zm-13.013.143h2.256c1.632 0 1.421 1.837 1.418 1.861h-5.603V3h1.93v7.138Zm31.516 1.861h-1.862V3h1.862v8.999Z"/>
+  <path fill="url(#a)" fill-rule="evenodd" d="M2.7 3c1.492 0 2.7 1.192 2.7 2.663v1.012h.9c1.49 0 2.7 1.192 2.7 2.662S7.791 12 6.3 12H0V5.663C0 4.193 1.209 3 2.7 3Z" clip-rule="evenodd"/>
+  <defs>
+    <radialGradient id="a" cx="0" cy="0" r="1" gradientTransform="matrix(-1.54236 7.07838 -10.231 -2.15602 4.627 5.022)" gradientUnits="userSpaceOnUse">
+      <stop offset=".106" stop-color="#FE7B02"/>
+      <stop offset=".394" stop-color="#FE3F21"/>
+      <stop offset=".608" stop-color="#F858BC"/>
+      <stop offset=".929" stop-color="#575ECF"/>
+    </radialGradient>
+  </defs>
+</svg>
+
+
+	</a>
+	
+	<span id="lovable-badge-divider" aria-hidden="true"></span>
+	
+	<button 
+		id="lovable-badge-close"
+		aria-label="Dismiss"
+		title="Dismiss"
+		type="button">
+		<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 16 16" aria-hidden="true">
+			<path d="M10.646 4.646a.5.5 0 1 1 .707.708L8.707 8l2.646 2.646a.5.5 0 1 1-.707.707L8 8.707l-2.646 2.646a.5.5 0 1 1-.708-.707L7.293 8 4.646 5.354a.5.5 0 1 1 .708-.708L8 7.293l2.646-2.647Z"/>
+		</svg>
+	</button>
+</aside>
+<script>
+	// Don't show the lovable-badge if the page is in an iframe or if it's being rendered by puppeteer (screenshot service)
+	if (window.self !== window.top || navigator.userAgent.includes('puppeteer')) {
+		// the page is in an iframe
+		var badge = document.getElementById('lovable-badge');
+		if (badge) {
+			badge.style.display = 'none';
+		}
+	}
+
+	// Add click event listener to close button with animation
+	var closeButton = document.getElementById('lovable-badge-close');
+	if (closeButton) {
+		closeButton.addEventListener('click', function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			var badge = document.getElementById('lovable-badge');
+			if (badge) {
+				badge.classList.add('closing');
+				setTimeout(function() {
+					if (badge) {
+						badge.style.display = 'none';
+					}
+				}, 240);
+			}
+		});
+	}
+</script>
+</body>
 </html>
