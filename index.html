@@ -310,7 +310,7 @@
       const triggerFileDownload = (blob, filename) => {
           const safeName = safeFileName(filename);
           const ua = navigator.userAgent || "";
-          const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+          const isIOS = (/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) && !window.MSStream;
           const isAndroid = /Android/i.test(ua);
 
           // iOS Safari ignores the `download` attribute on blob URLs.
