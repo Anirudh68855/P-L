@@ -307,27 +307,48 @@
           .replace(/_+/g, "_")
           .replace(/^_+|_+$/g, "");
 
-      const triggerFileDownload = (blob, filename) => {
+      const createMobileDownloadWindow = () => {
+          const ua = navigator.userAgent || "";
+          const isMobile = /Android|iPad|iPhone|iPod|Mobi|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+          if (!isMobile) return null;
+          const win = window.open("", "_blank");
+          if (win) {
+              win.document.title = "Preparing PDF...";
+              win.document.body.style.margin = "0";
+              win.document.body.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+              win.document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#334155;background:#f8fafc;font-weight:700">Preparing PDF...</div>';
+          }
+          return win;
+      };
+
+      const triggerFileDownload = (blob, filename, preOpenedWindow = null) => {
           const safeName = safeFileName(filename);
           const ua = navigator.userAgent || "";
           const isIOS = (/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) && !window.MSStream;
           const isAndroid = /Android/i.test(ua);
+          const isMobile = isIOS || isAndroid || /Mobi|Mobile/i.test(ua);
 
-          // iOS Safari ignores the `download` attribute on blob URLs.
-          // Open the PDF immediately in a new tab, then load it with a data URL when ready.
-          if (isIOS) {
-              const win = window.open("", "_blank");
+          const showPdfInWindow = (win, dataUrl) => {
+              if (!win || win.closed) {
+                  window.location.href = dataUrl;
+                  return;
+              }
+              win.document.title = safeName;
+              win.document.body.style.margin = "0";
+              win.document.body.innerHTML = `
+                  <div style="height:100vh;display:flex;flex-direction:column;background:#f8fafc;font-family:system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+                      <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #e2e8f0;background:#fff">
+                          <strong style="font-size:13px;color:#0f172a">${safeName}</strong>
+                          <a href="${dataUrl}" download="${safeName}" style="padding:10px 14px;border-radius:10px;background:#4f46e5;color:#fff;text-decoration:none;font-size:13px;font-weight:800">Download</a>
+                      </div>
+                      <iframe src="${dataUrl}" style="border:0;width:100%;flex:1" title="${safeName}"></iframe>
+                  </div>`;
+          };
+
+          if (isMobile || preOpenedWindow) {
               const reader = new FileReader();
               reader.onloadend = () => {
-                  const dataUrl = reader.result;
-                  if (win) {
-                      win.document.title = safeName;
-                      win.document.body.style.margin = "0";
-                      win.document.body.innerHTML =
-                          `<iframe src="${dataUrl}" style="border:0;width:100vw;height:100vh" title="${safeName}"></iframe>`;
-                  } else {
-                      window.location.href = dataUrl;
-                  }
+                  showPdfInWindow(preOpenedWindow || window.open("", "_blank"), reader.result);
               };
               reader.readAsDataURL(blob);
               return;
@@ -341,13 +362,6 @@
           a.style.display = "none";
           document.body.appendChild(a);
           a.click();
-
-          // Android Chrome sometimes needs a fallback if download didn't trigger.
-          if (isAndroid) {
-              setTimeout(() => {
-                  try { window.open(url, "_blank"); } catch (e) {}
-              }, 600);
-          }
 
           setTimeout(() => {
               a.remove();
@@ -1906,6 +1920,7 @@
                           <div className="flex gap-2">
                               <button
                                   onClick={async () => {
+                                      const mobileDownloadWindow = createMobileDownloadWindow();
                                       const { jsPDF } = window.jspdf;
                                       const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
                                       const pageW = doc.internal.pageSize.getWidth();
@@ -2060,7 +2075,7 @@
                                           doc.text("This is a system-generated financial statement. Confidential — for internal use only.", pageW / 2, pageH - 6, { align: "center" });
                                       }
 
-                                      triggerFileDownload(doc.output("blob"), `Ninjacart_PnL_${month}_${year}.pdf`);
+                                      triggerFileDownload(doc.output("blob"), `Ninjacart_PnL_${month}_${year}.pdf`, mobileDownloadWindow);
                                   }}
                                   className="p-2.5 bg-white border border-black/5 rounded-xl text-slate-400 hover:text-indigo-600 hover:shadow-sm hover:border-indigo-100 transition-all"
                                   title="Download PDF Statement"
