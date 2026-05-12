@@ -309,6 +309,38 @@ window.$RefreshSig$ = () => (type) => type;</script>
           return `${rounded.toFixed(1)}%`;
       };
 
+      const safeFileName = (name) => String(name || "download.pdf")
+          .replace(/[^a-z0-9._-]+/gi, "_")
+          .replace(/_+/g, "_")
+          .replace(/^_+|_+$/g, "");
+
+      const triggerFileDownload = (blob, filename) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = safeFileName(filename);
+          a.target = "_blank";
+          a.rel = "noopener";
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+              a.remove();
+              URL.revokeObjectURL(url);
+          }, 1500);
+      };
+
+      let cachedLogoData = null;
+      fetch("/ninjacart-logo.png")
+          .then((res) => res.blob())
+          .then((blob) => new Promise((resolve) => {
+              const r = new FileReader();
+              r.onloadend = () => resolve(r.result);
+              r.readAsDataURL(blob);
+          }))
+          .then((data) => { cachedLogoData = data; })
+          .catch(() => { cachedLogoData = null; });
+
       const Icon = ({ name, size = 16, className = "", onClick }) => {
           const icons = {
               menu: <path d="M4 6h16M4 12h16M4 18h16" />,
@@ -1854,17 +1886,7 @@ window.$RefreshSig$ = () => (type) => type;</script>
                                       const pageW = doc.internal.pageSize.getWidth();
                                       const pageH = doc.internal.pageSize.getHeight();
 
-                                      // Load Ninjacart logo as data URL
-                                      let logoData = null;
-                                      try {
-                                          const res = await fetch("/ninjacart-logo.png");
-                                          const blob = await res.blob();
-                                          logoData = await new Promise((resolve) => {
-                                              const r = new FileReader();
-                                              r.onloadend = () => resolve(r.result);
-                                              r.readAsDataURL(blob);
-                                          });
-                                      } catch (e) { /* fallback to text mark */ }
+                                      const logoData = cachedLogoData;
 
                                       // === HEADER BAND ===
                                       doc.setFillColor(79, 70, 229);
@@ -2013,7 +2035,7 @@ window.$RefreshSig$ = () => (type) => type;</script>
                                           doc.text("This is a system-generated financial statement. Confidential — for internal use only.", pageW / 2, pageH - 6, { align: "center" });
                                       }
 
-                                      doc.save(`Ninjacart_PnL_${month}_${year}.pdf`);
+                                      triggerFileDownload(doc.output("blob"), `Ninjacart_PnL_${month}_${year}.pdf`);
                                   }}
                                   className="p-2.5 bg-white border border-black/5 rounded-xl text-slate-400 hover:text-indigo-600 hover:shadow-sm hover:border-indigo-100 transition-all"
                                   title="Download PDF Statement"
